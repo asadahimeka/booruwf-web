@@ -25,8 +25,12 @@ interface AppState {
   addToSelectedList: (item: Post) => void
 }
 
-const ykFlag = ['konachan', 'yande.re'].some(e => location.href.includes(e))
-const poolFlag = location.pathname == '/pool'
+const params = new URLSearchParams(location.search)
+const ykFlag = ['konachan', 'yande.re'].some(e => {
+  const site = params.get('site')
+  return site ? site.includes(e) : true
+})
+const poolFlag = Boolean(params.get('path')?.includes('pool'))
 
 const store = Vue.observable<AppState>({
   requestState: false,

@@ -42,7 +42,6 @@
     "types": [
       "vite/client",
       "node",
-      "tampermonkey",
       "vue",
       "vuetify",
       "unplugin-vue2-script-setup/types"
@@ -60,8 +59,7 @@
     "src/**/*.ts",
     "src/**/*.d.ts",
     "src/**/*.tsx",
-    "src/**/*.vue",
-    "components.d.ts",
+    "src/**/*.vue"
   ],
   "exclude": [
     "node_modules",

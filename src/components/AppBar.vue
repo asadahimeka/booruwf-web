@@ -3,7 +3,7 @@
     <v-app-bar-nav-icon @click="store.toggleDrawer" />
     <div v-if="store.isYKSite && showPopAction" style="display:flex" class="align-center hidden-sm-and-down">
       <v-toolbar-title class="mr-4" v-text="popTitle" />
-      <v-switch v-model="isPopSearchByDate" hide-details :label="isPopSearchByDate ? '按日期' : '最近人气'" />
+      <!-- <v-switch v-model="isPopSearchByDate" hide-details :label="isPopSearchByDate ? '按日期' : '最近人气'" /> -->
       <v-menu transition="slide-y-transition" offset-y>
         <template #activator="{ on, attrs }">
           <v-btn small class="ml-4" v-bind="attrs" v-on="on">
@@ -49,11 +49,11 @@
           v-model="popSearchDate"
           no-title
           locale="zh-cn"
-          :weekday-format="() => ''"
           @input="showPopDatePicker = false"
         />
+        <!-- :weekday-format="() => ''" -->
       </v-menu>
-      <v-btn class="ml-3" icon href="/post?_wf=1">
+      <v-btn class="ml-3" icon href="/">
         <v-icon>{{ mdiHome }}</v-icon>
       </v-btn>
     </div>
@@ -66,7 +66,10 @@
         @keyup="goToPage($event)"
       >
       <template v-if="store.isYKSite">
-        <v-btn v-if="userName" title="收藏夹" icon @click="fetchTaggedPosts(`vote:3:${userName} order:vote`)">
+        <!-- <v-btn v-if="userName" title="收藏夹" icon @click="fetchTaggedPosts(`vote:3:${userName} order:vote`)">
+          <v-icon>{{ mdiStar }}</v-icon>
+        </v-btn> -->
+        <v-btn title="HIMEYOUKO 的收藏夹" icon @click="fetchTaggedPosts(`vote:3:HIMEYOUKO order:vote`)">
           <v-icon>{{ mdiStar }}</v-icon>
         </v-btn>
         <v-btn title="图集 (Pool)" icon @click="showPool()">
@@ -94,12 +97,12 @@
                 v-model="searchState.searchTerm"
                 hide-details
                 v-on="on"
-                @input="onSearchTermInput"
-                @click="searchState.showMenu = true"
-                @blur="searchState.showMenu = false"
                 @keydown="onSearchTermKeydown"
               />
             </div>
+            <!-- @click="searchState.showMenu = true" -->
+            <!-- @blur="searchState.showMenu = false" -->
+            <!-- @input="onSearchTermInput" -->
           </v-slide-x-transition>
         </template>
         <v-list v-show="store.isYKSite && searchState.searchItems.length" class="ac_tags_list" dense>
@@ -120,7 +123,7 @@
         :append-icon="mdiMagnify"
         @keyup.enter="searchPool"
       />
-      <v-btn class="ml-3" icon href="/post?_wf=1">
+      <v-btn class="ml-3" icon href="/">
         <v-icon>{{ mdiHome }}</v-icon>
       </v-btn>
       <v-btn title="人气" icon @click="goToPopularPage()">
@@ -157,15 +160,15 @@
         </template>
         <v-list dense flat style="min-width: 300px;max-height: 80vh;overflow: auto;">
           <v-subheader class="ml-2">
-            <span class="mr-4">下载列表</span>
+            <!-- <span class="mr-4">下载列表</span>
             <v-btn v-show="store.selectedImageList.length > 0" small @click="startDownload">
               开始下载
-            </v-btn>
+            </v-btn> -->
             <v-btn v-show="store.selectedImageList.length > 0" class="ml-2" small @click="exportFileUrls">
               输出下载地址
             </v-btn>
           </v-subheader>
-          <v-list-item-group color="primary">
+          <!-- <v-list-item-group color="primary">
             <v-list-item v-for="item in store.selectedImageList" :key="item.id" dense two-line>
               <v-list-item-avatar>
                 <v-btn v-if="!item.loading && !item.loaded" icon>
@@ -186,16 +189,16 @@
                 </v-btn>
               </v-list-item-action>
             </v-list-item>
-          </v-list-item-group>
+          </v-list-item-group> -->
         </v-list>
       </v-menu>
     </template>
     <v-btn title="切换深色模式" icon @click="toggleDarkmode">
       <v-icon>{{ mdiBrightness6 }}</v-icon>
     </v-btn>
-    <v-btn title="退出瀑布流模式" icon @click="exitMasonry">
+    <!-- <v-btn title="退出瀑布流模式" icon @click="exitMasonry">
       <v-icon>{{ mdiLocationExit }}</v-icon>
-    </v-btn>
+    </v-btn> -->
     <v-progress-linear
       :active="store.requestState"
       :height="6"
@@ -216,33 +219,35 @@ import {
   mdiCalendarText,
   mdiCalendarToday,
   mdiCalendarWeek,
-  mdiCheckUnderlineCircle,
+  // mdiCheckUnderlineCircle,
   mdiCheckboxBlankOutline,
   mdiCheckboxIntermediate,
   mdiCheckboxMarked,
   mdiChevronLeft,
   mdiChevronRight,
-  mdiDelete,
+  // mdiDelete,
   mdiDownload,
-  mdiFileClockOutline,
+  // mdiFileClockOutline,
   mdiFire,
   mdiHome,
   mdiImageMultiple,
-  mdiLocationExit,
+  // mdiLocationExit,
   mdiMagnify,
   mdiShuffle,
   mdiStar,
   mdiViewDashboardVariant,
 } from '@mdi/js'
-import { computed, onMounted, reactive, ref, set, watch } from '@vue/composition-api'
+import { computed, /* onMounted, */ reactive, ref, /* set, */ watch } from '@vue/composition-api'
 import { useVuetify } from '@/plugins/vuetify'
 import store from '@/store'
-import { addDate, debounce, downloadFile, eventBus, formatDate, showMsg, subDate } from '@/utils'
+import { addDate, /* debounce, */ downloadFile, eventBus, formatDate, /* showMsg, */ subDate } from '@/utils'
 import { loadPostsByPage, loadPostsByTags, refreshPosts } from '@/store/actions/post'
-import { getRecentTags, getUsername, isPopularPage, searchTagsByName } from '@/api/moebooru'
+import { /* getRecentTags, */ isPopularPage/* , searchTagsByName */ } from '@/api/moebooru'
+import { getCurrSite } from '@/api/booru'
 
+const host = getCurrSite()
 const title = computed(() => {
-  return `${location.host.toUpperCase()} - ${store.imageList.length} Posts - Page `
+  return `${host.toUpperCase()} - ${store.imageList.length} Posts - Page `
 })
 
 const cols = ref([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 14, 16, 18, 20].reduce<Record<string, string>>((acc, cur) => {
@@ -258,7 +263,7 @@ const selColumn = (val: string) => {
 const isNoSelected = computed(() => store.selectedImageList.length === 0)
 const isOneOrMoreSelected = computed(() => store.selectedImageList.length > 0 && store.selectedImageList.length < store.imageList.length)
 const isAllSelected = computed(() => store.selectedImageList.length > 0 && store.selectedImageList.length === store.imageList.length)
-const loadingValue = ref(0)
+// const loadingValue = ref(0)
 
 const selectAll = () => {
   if (isNoSelected.value || isOneOrMoreSelected.value) {
@@ -273,33 +278,34 @@ const selectAll = () => {
   }
 }
 
-const removeFromList = (id: string) => {
-  store.selectedImageList = store.selectedImageList.filter(e => {
-    if (e.loading) return true
-    return e.id !== id
-  })
-}
+// const removeFromList = (id: string) => {
+//   store.selectedImageList = store.selectedImageList.filter(e => {
+//     if (e.loading) return true
+//     return e.id !== id
+//   })
+// }
 
 const tagsQuery = new URLSearchParams(location.search).get('tags')
 const searchState = reactive({
-  showInput: !!tagsQuery?.includes('pool:'),
+  showInput: !!tagsQuery,
   showMenu: false,
   searchTerm: tagsQuery || '',
-  searchItems: store.isYKSite ? getRecentTags() : [],
+  // searchItems: store.isYKSite ? getRecentTags() : [],
+  searchItems: [],
 })
 
-const onSearchTermInput = debounce(() => {
-  if (!store.isYKSite) return
-  const val = searchState.searchTerm
-  const lastTag = val?.split(/\s+/).slice(-1)[0]
-  if (!lastTag) {
-    searchState.showMenu = false
-    searchState.searchItems = []
-    return
-  }
-  searchState.showMenu = true
-  searchState.searchItems = searchTagsByName(lastTag)
-}, 500)
+// const onSearchTermInput = debounce(() => {
+//   if (!store.isYKSite) return
+//   const val = searchState.searchTerm
+//   const lastTag = val?.split(/\s+/).slice(-1)[0]
+//   if (!lastTag) {
+//     searchState.showMenu = false
+//     searchState.searchItems = []
+//     return
+//   }
+//   searchState.showMenu = true
+//   searchState.searchItems = searchTagsByName(lastTag)
+// }, 500)
 
 const selectTag = (tag: string) => {
   const termArr = searchState.searchTerm.split(/\s+/)
@@ -308,13 +314,13 @@ const selectTag = (tag: string) => {
   searchState.searchItems = []
 }
 
-const userName = ref('')
-onMounted(async () => {
-  if (store.isYKSite) {
-    const name = await getUsername()
-    if (name) userName.value = name
-  }
-})
+// const userName = ref('')
+// onMounted(async () => {
+//   if (store.isYKSite) {
+//     const name = await getUsername()
+//     if (name) userName.value = name
+//   }
+// })
 
 const fetchTaggedPosts = (tags: string) => {
   const url = new URL(location.href)
@@ -334,12 +340,12 @@ const showTagsInput = () => {
 
 const onSearchTermKeydown = (ev: KeyboardEvent) => {
   if (ev.key != 'Enter') return
-  if (store.isYKSite && searchState.searchItems.length) {
-    const item = document.querySelector<HTMLElement>('.ac_tags_list .v-list-item--highlighted')
-    item && selectTag(item.innerText)
-  } else {
-    fetchTaggedPosts(searchState.searchTerm)
-  }
+  // if (store.isYKSite && searchState.searchItems.length) {
+  //   const item = document.querySelector<HTMLElement>('.ac_tags_list .v-list-item--highlighted')
+  //   item && selectTag(item.innerText)
+  // } else {
+  fetchTaggedPosts(searchState.searchTerm)
+  // }
 }
 
 const showPopAction = ref(isPopularPage())
@@ -356,26 +362,29 @@ const periodByDateMap = (() => {
   return map
 })()
 
-const getRecentPeriod = () => {
-  const params = new URLSearchParams(location.search)
-  let period: string | null | undefined = params.get('period')
-  if (location.pathname.includes('popular_by')) {
-    period = location.pathname.match(/\/post\/popular_by_(.*)/)?.[1]
-    period = Object.keys(periodByDateMap).find(e => periodByDateMap[e][2] == period)
-  }
-  return period || '1d'
-}
-const isPopularRecent = () => location.pathname.includes('popular_recent')
-const getPopTitle = () => {
-  if (isPopularRecent()) {
-    return `Popular Recent ${getRecentPeriod()}`
-  }
-  return location.pathname.split('/').pop()?.replace(/_/g, ' ').toUpperCase()
-}
+// const getRecentPeriod = () => {
+//   const params = new URLSearchParams(location.search)
+//   let period: string | null | undefined = params.get('period')
+//   if (location.href.includes('popular_by')) {
+//     period = location.href.match(/\/post\/popular_by_(.*)/)?.[1]
+//     period = Object.keys(periodByDateMap).find(e => periodByDateMap[e][2] == period)
+//   }
+//   return period || '1d'
+// }
+// const isPopularRecent = () => location.pathname.includes('popular_recent')
+// const getPopTitle = () => {
+//   if (isPopularRecent()) {
+//     return `Popular Recent ${getRecentPeriod()}`
+//   }
+//   return location.pathname.split('/').pop()?.replace(/_/g, ' ').toUpperCase()
+// }
 
-const popTitle = ref(getPopTitle())
-const isPopSearchByDate = ref(!isPopularRecent())
-const recentPeriod = ref(getRecentPeriod())
+// const popTitle = ref(getPopTitle())
+const popTitle = ref('Popular Posts')
+// const isPopSearchByDate = ref(!isPopularRecent())
+const isPopSearchByDate = ref(true)
+// const recentPeriod = ref(getRecentPeriod())
+const recentPeriod = ref('1d')
 const periodComputedMap = computed(() => {
   return isPopSearchByDate.value ? periodByDateMap : periodMap
 })
@@ -383,21 +392,29 @@ const periodComputedMap = computed(() => {
 const showPopDatePicker = ref(false)
 const popSearchDate = ref((() => {
   const params = new URLSearchParams(location.search)
-  const y = params.get('year')
-  const m = params.get('month')
-  const d = params.get('day')
+  const url = new URL(params.get('path') || '', location.origin)
+  const y = url.searchParams.get('year')
+  const m = url.searchParams.get('month')
+  const d = url.searchParams.get('day')
   if (y && m && d) return formatDate(new Date(`${y}-${m}-${d}`))
   return subDate(1, 'days')
 })())
 
 const fetchPopularPosts = (type: string) => {
-  let url = `/post/popular_recent?period=${type}`
-  if (isPopSearchByDate.value) {
-    const [year, month, day] = popSearchDate.value.split('-')
-    url = `/post/popular_by_${periodMap[type][2]}?day=${day}&month=${month}&year=${year}`
-  }
+  // let url = `/post/popular_recent?period=${type}`
+  // if (isPopSearchByDate.value) {
+  //   const [year, month, day] = popSearchDate.value.split('-')
+  //   url = `/post/popular_by_${periodMap[type][2]}?day=${day}&month=${month}&year=${year}`
+  // }
+  const url = new URL(location.href)
+  const params = new URLSearchParams()
+  const [year, month, day] = popSearchDate.value.split('-')
+  params.set('year', year)
+  params.set('month', month)
+  params.set('day', day)
+  url.searchParams.set('path', `/post/popular_by_${periodMap[type][2]}?${params}`)
   history.pushState('', '', url)
-  popTitle.value = getPopTitle()
+  // popTitle.value = getPopTitle()
   refreshPosts()
 }
 
@@ -427,13 +444,18 @@ const loadNextPeriod = () => {
 }
 
 const goToPopularPage = () => {
-  location.href = '/post/popular_recent?period=1d&_wf=1'
+  const params = new URLSearchParams()
+  params.set('site', host)
+  params.set('path', '/post/popular_by_day')
+  location.assign(`/?${params}`)
 }
 
 const showPool = () => {
   store.showPostList = false
   store.showPoolList = true
-  history.pushState('', '', '/pool')
+  const url = new URL(location.href)
+  url.searchParams.set('path', '/pool')
+  history.pushState('', '', url)
 }
 
 const poolQueryTerm = ref('')
@@ -441,38 +463,33 @@ const searchPool = () => {
   eventBus.$emit('loadPoolsByQuery', poolQueryTerm.value)
 }
 
-const download = (url: string, name: string) => {
-  loadingValue.value = 0
-  return downloadFile(url, name, {
-    saveAs: false,
-    onprogress: d => {
-      loadingValue.value = (d.loaded / d.total) * 100
-    },
-  })
-}
+// const download = (url: string, name: string) => {
+//   loadingValue.value = 0
+//   return downloadFile(url, name)
+// }
 
-const startDownload = async () => {
-  try {
-    const len = store.selectedImageList.length
-    for (let index = 0; index < len; index++) {
-      const item = store.selectedImageList[index]
-      const { fileUrl, fileDownloadName, loaded } = item
-      if (!fileUrl) continue
-      if (loaded) continue
-      set(item, 'loading', true)
-      await download(fileUrl, `${fileDownloadName}.${fileUrl.split('.').pop()}`)
-      set(item, 'loading', false)
-      set(item, 'loaded', true)
-    }
-  } catch (error) {
-    const msg = error as string
-    showMsg({ msg, type: 'error' })
-  }
-}
+// const startDownload = async () => {
+//   try {
+//     const len = store.selectedImageList.length
+//     for (let index = 0; index < len; index++) {
+//       const item = store.selectedImageList[index]
+//       const { fileUrl, fileDownloadName, loaded } = item
+//       if (!fileUrl) continue
+//       if (loaded) continue
+//       set(item, 'loading', true)
+//       await download(fileUrl, `${fileDownloadName}.${fileUrl.split('.').pop()}`)
+//       set(item, 'loading', false)
+//       set(item, 'loaded', true)
+//     }
+//   } catch (error) {
+//     const msg = error as string
+//     showMsg({ msg, type: 'error' })
+//   }
+// }
 
 const exportFileUrls = async () => {
   const urlText = store.selectedImageList.map(e => e.fileUrl).join('\n')
-  await downloadFile(`data:text/plain;charset=utf-8,${encodeURIComponent(urlText)}`, 'image-urls.txt')
+  /* await  */downloadFile(`data:text/plain;charset=utf-8,${encodeURIComponent(urlText)}`, 'image-urls.txt')
 }
 
 const vuetify = useVuetify()
@@ -495,9 +512,9 @@ const goToPage = (ev: KeyboardEvent) => {
   action(input?.value || 0)
 }
 
-const exitMasonry = () => {
-  const url = new URL(location.href)
-  url.searchParams.delete('_wf')
-  location.assign(url)
-}
+// const exitMasonry = () => {
+//   const url = new URL(location.href)
+//   url.searchParams.delete('_wf')
+//   location.assign(url)
+// }
 </script>

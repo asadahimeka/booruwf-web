@@ -1,5 +1,4 @@
 dist
 node_modules
 scripts
-/**/header.config.js
 /**/*.d.ts

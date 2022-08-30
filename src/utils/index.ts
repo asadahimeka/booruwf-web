@@ -7,16 +7,17 @@ export function isURL(s: string) {
   return /^https?:\/\/.*/.test(s)
 }
 
-export function downloadFile(url: string, name: string, options?: Partial<Tampermonkey.DownloadRequest>) {
-  return new Promise<void>((resolve, reject) => {
-    GM_download({
-      url,
-      name,
-      onload: () => resolve(),
-      onerror: err => reject(new Error(err.error)),
-      ...options,
-    })
-  })
+export function downloadFile(url: string, name = '') {
+  const a = document.createElement('a')
+  a.href = url
+  a.target = '_blank'
+  a.rel = 'noopener noreferrer'
+  a.style.display = 'none'
+  console.log('name: ', name)
+  a.setAttribute('download', name)
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
 }
 
 type MsgType = 'success' | 'error'

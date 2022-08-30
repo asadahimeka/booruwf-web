@@ -29,13 +29,13 @@
               <v-img
                 alt=""
                 class="elevation-6"
-                :src="`/data/avatars/${item.user_id}.jpg`"
+                :src="`https://${host}/data/avatars/${item.user_id}.jpg`"
                 lazy-src="https://upload-bbs.mihoyo.com/upload/2022/08/13/190122060/f65e984cb2f5184ba167e461bfdeea55_8564255716639207386.png"
               />
             </v-list-item-avatar>
             <v-row align="center" justify="end">
               <v-list-item-content class="ml-2">
-                <v-list-item-title><a :href="`/pool/show/${item.id}`" target="_blank">Pool #{{ item.id }}</a></v-list-item-title>
+                <v-list-item-title><a :href="`https://${host}/pool/show/${item.id}`" target="_blank">Pool #{{ item.id }}</a></v-list-item-title>
               </v-list-item-content>
               <v-chip class="mr-1">{{ item.post_count }} 张</v-chip>
               <v-tooltip bottom>
@@ -48,7 +48,7 @@
               </v-tooltip>
               <v-tooltip bottom>
                 <template #activator="{ on, attrs }">
-                  <v-btn icon v-bind="attrs" :href="`/pool/zip/${item.id}?jpeg=1`" v-on="on">
+                  <v-btn icon v-bind="attrs" :href="`https://${host}/pool/zip/${item.id}?jpeg=1`" v-on="on">
                     <v-icon>{{ mdiDownload }}</v-icon>
                   </v-btn>
                 </template>
@@ -73,6 +73,9 @@ import { computed, onMounted, onUnmounted, ref } from '@vue/composition-api'
 import { type Pool, fetchPools } from '@/api/moebooru'
 import { eventBus, notReachBottom, throttleScroll } from '@/utils'
 import store from '@/store'
+import { getCurrSite } from '@/api/booru'
+
+const host = ref(getCurrSite())
 
 const columnCount = ref({
   300: 1,
@@ -115,7 +118,7 @@ const loadData = async (query?: string) => {
 }
 
 const viewPool = (id: string) => {
-  window.open(`/post?tags=pool%3A${id}&_wf=1`, '_blank')
+  window.open(`https://${host.value}/post?tags=pool%3A${id}&_wf=1`, '_blank')
 }
 
 const scrollFn = throttleScroll(() => {

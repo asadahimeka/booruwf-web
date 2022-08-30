@@ -36,7 +36,7 @@
           v-text="`${imageSelected.rating?.toUpperCase()} ${imageSelected.id}`"
         />
         <v-spacer />
-        <v-tooltip v-if="!notYKSite" bottom>
+        <!-- <v-tooltip v-if="store.isYKSite" bottom>
           <template #activator="{ on, attrs }">
             <v-btn
               fab
@@ -52,7 +52,7 @@
             </v-btn>
           </template>
           <span>{{ postDetail.voted ? '已收藏' : '收藏' }}</span>
-        </v-tooltip>
+        </v-tooltip> -->
         <v-tooltip bottom>
           <template #activator="{ on, attrs }">
             <v-btn
@@ -167,7 +167,7 @@
           <span>关闭</span>
         </v-tooltip>
       </v-toolbar>
-      <d-player v-if="isVideo" style="width: 100%;" :options="{ theme: '#ee8888', autoplay: true, video: { url: imageSelected.fileUrl } }" />
+      <DPlayer v-if="isVideo" style="width: 100%;" :options="{ theme: '#ee8888', autoplay: true, video: { url: imageSelected.fileUrl } }" />
       <!-- <video v-if="isVideo" controls style="width: 100%;" :src="imageSelected.fileUrl ?? void 0"></video> -->
       <div v-show="!isVideo" class="img_scale_scroll">
         <img :src="scaleOn ? imageSelected.fileUrl ?? void 0 : void 0" alt="">
@@ -215,8 +215,8 @@ import {
   mdiChevronRight,
   mdiClose,
   mdiDownload,
-  mdiHeart,
-  mdiHeartPlusOutline,
+  // mdiHeart,
+  // mdiHeartPlusOutline,
   mdiLaunch,
   mdiLinkVariant,
   mdiMagnifyMinusOutline,
@@ -227,8 +227,9 @@ import {
 import { computed, onMounted, ref, watch } from '@vue/composition-api'
 import DPlayer from './DPlayer.vue'
 import { downloadFile, isURL, showMsg } from '@/utils'
-import { type PostDetail, addPostToFavorites, getPostDetail } from '@/api/moebooru'
+import { type PostDetail, /* addPostToFavorites, */ getPostDetail } from '@/api/moebooru'
 import store from '@/store'
+import { getCurrSite } from '@/api/booru'
 
 const showImageToolbar = ref(true)
 const innerWidth = ref(window.innerWidth)
@@ -267,17 +268,15 @@ const imageSelectedWidth = computed(() => {
   return Math.min(width, width2)
 })
 
-const notYKSite = computed(() => {
-  return ['konachan', 'yande'].every(e => !location.host.includes(e))
-})
-
 const toggleToolbar = () => {
   showImageToolbar.value = !showImageToolbar.value
 }
 
+const host = ref(getCurrSite())
+
 const toTagsPage = (tag: string) => {
-  if (notYKSite.value) return
-  window.open(`/post?tags=${tag}`, '_blank', 'noreferrer')
+  if (!store.isYKSite) return
+  window.open(`https://${host.value}/post?tags=${tag}`, '_blank', 'noreferrer')
 }
 
 const toDetailPage = () => {
@@ -312,11 +311,11 @@ const close = () => {
 
 const postDetail = ref<PostDetail>({})
 
-const addFavorite = async () => {
-  if (notYKSite.value || postDetail.value.voted) return
-  const isSuccess = await addPostToFavorites(imageSelected.value.id)
-  if (isSuccess) postDetail.value.voted = true
-}
+// const addFavorite = async () => {
+//   if (notYKSite.value || postDetail.value.voted) return
+//   const isSuccess = await addPostToFavorites(imageSelected.value.id)
+//   if (isSuccess) postDetail.value.voted = true
+// }
 
 const setPostDetail = async () => {
   if (store.isYKSite) {

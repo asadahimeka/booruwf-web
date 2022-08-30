@@ -2,55 +2,9 @@ import { forSite } from '@himeka/booru'
 import Post from '@himeka/booru/dist/structures/Post'
 import SearchResults from '@himeka/booru/dist/structures/SearchResults'
 import { formatDate, showMsg } from '../utils'
+import { getCurrSite, getTranslatedTags } from './booru'
 
-function getYandereUserId() {
-  const match = document.cookie.match(/user_id=(\d+)/)
-  return match?.[1]
-}
-
-function getKonachanUsername() {
-  const match = document.cookie.match(/login=(\w+)/)
-  return match?.[1]
-}
-
-let _moebooruUserName: string | null | undefined
-export async function getUsername() {
-  try {
-    if (_moebooruUserName) return _moebooruUserName
-    if (location.href.includes('konachan')) {
-      _moebooruUserName = getKonachanUsername()
-      return _moebooruUserName
-    }
-    const username = localStorage.getItem('__username')
-    _moebooruUserName = username
-    if (username) return username
-    const id = getYandereUserId()
-    if (!id) return ''
-    const response = await fetch(`/user.json?id=${id}`)
-    const result = await response.json()
-    const { name } = result[0] as Record<string, string>
-    localStorage.setItem('__username', name)
-    return name
-  } catch (error) {
-    console.log('getUsername error:', error)
-    return ''
-  }
-}
-
-export async function checkPostIsVoted(id: string) {
-  try {
-    if (!id) return false
-    const username = await getUsername()
-    if (!username) return false
-    const response = await fetch(`/favorite/list_users.json?id=${id}`)
-    const result = await response.json()
-    const users: string[] = result.favorited_users.split(',')
-    return users.includes(username)
-  } catch (error) {
-    console.log('checkPostIsVoted error:', error)
-    return false
-  }
-}
+const host = getCurrSite()
 
 export interface PostDetail {
   voted?: boolean
@@ -74,12 +28,16 @@ const tagInfoMap: Record<string, string[]> = {
 export async function getPostDetail(id: string): Promise<PostDetail | false> {
   try {
     if (!id) return false
-    const response = await fetch(`/post.json?api_version=2&tags=id:${id}&include_tags=1&include_votes=1`)
+    // TODO: Use credentials
+    // const response = await fetch(`https://kw.cocomi.cf/https://${host}/post.json?api_version=2&tags=id:${id}&include_tags=1&include_votes=1`)
+    const response = await fetch(`https://kw.cocomi.cf/https://${host}/post.json?api_version=2&tags=id:${id}&include_tags=1`)
     const result = await response.json()
+    const tagsCN = await getTranslatedTags()
     return {
-      voted: result.votes[id] == 3,
+      // voted: result.votes[id] == 3,
+      voted: false,
       tags: Object.entries<string>(result.tags).map(([tag, type]) => {
-        const tagCN = window.__tagsCN?.[tag]
+        const tagCN = tagsCN?.[tag]
         const typeText = tagInfoMap[type]?.[0]
         const tagText = [
           typeText && `[ ${typeText} ] `,
@@ -106,7 +64,8 @@ export async function addPostToFavorites(id: string) {
   const form = new FormData()
   form.append('id', id)
   form.append('score', '3')
-  const response = await fetch('/post/vote.json', {
+  // TODO: Use credentials
+  const response = await fetch(`https://${host}/post/vote.json`, {
     method: 'POST',
     headers: { 'x-csrf-token': sessionStorage.getItem('csrf-token') ?? '' },
     body: form,
@@ -126,20 +85,23 @@ export async function addPostToFavorites(id: string) {
 }
 
 export function isPopularPage() {
-  return /(yande.re|konachan).*\/post\/popular_/.test(location.href)
+  const params = new URLSearchParams(location.search)
+  return /(yande.re|konachan).*\/post\/popular_/.test(`${host}${params.get('path')}`)
 }
 
 export function isPoolShowPage() {
-  return /(yande.re|konachan).*\/pool\/show/.test(location.href)
+  const params = new URLSearchParams(location.search)
+  return /(yande.re|konachan).*\/pool\/show/.test(`${host}${params.get('path')}`)
 }
 
 export async function fetchPostsByPath(postsKey?: string, page?: number): Promise<SearchResults> {
-  const url = new URL(location.href)
+  const params = new URLSearchParams(location.search)
+  const url = new URL(`https://kw.cocomi.cf/https://${host}${params.get('path')}`)
   url.pathname += '.json'
   page && url.searchParams.set('page', page.toString())
   const response = await fetch(url)
   const result = await response.json()
-  const site = forSite(location.host)
+  const site = forSite(host)
   const results: [] = postsKey ? result[postsKey] : result
   const posts = results.map(e => new Post(e, site))
   return new SearchResults(posts, [], {}, site)
@@ -177,7 +139,7 @@ export interface Pool {
 }
 
 export async function fetchPools(page: number, query?: string): Promise<Pool[]> {
-  const url = new URL('/pool.json', location.origin)
+  const url = new URL(`https://kw.cocomi.cf/https://${host}/pool.json`)
   url.searchParams.set('page', page.toString() || '1')
   query && url.searchParams.set('query', query)
   const jsonResp = await fetch(url)

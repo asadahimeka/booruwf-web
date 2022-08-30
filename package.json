@@ -1,47 +1,45 @@
 {
-  "name": "yandere-masonry",
-  "version": "0.20.5",
+  "name": "booruwf",
+  "version": "0.21.0",
   "private": true,
-  "description": "Yande.re/Konachan Waterfall Layout.",
+  "description": "Booru sites masonry browsing mode.",
   "author": "asadahimeka",
   "license": "MIT",
-  "main": "dist/yandere-masonry.user.js",
+  "type": "module",
   "scripts": {
     "dev": "vite",
     "release": "node scripts/release.mjs",
     "build": "vite build",
     "prebuild": "vue-tsc --noEmit --skipLibCheck",
-    "postbuild": "node scripts/postbuild.mjs",
     "lint": "eslint src --ext .ts,.vue",
     "preview": "vite preview"
   },
   "dependencies": {
     "@himeka/booru": "2.7.1",
     "@vue/composition-api": "1.7.0",
-    "date-fns": "2.29.1",
+    "date-fns": "2.29.2",
     "vue": "2.6.14",
     "vue-masonry-css": "1.0.3",
-    "vuetify": "2.6.6"
+    "vuetify": "2.6.9"
   },
   "devDependencies": {
-    "@antfu/eslint-config-vue": "0.25.2",
+    "@antfu/eslint-config-vue": "0.26.2",
     "@mdi/js": "^7.0.96",
-    "@types/node": "18.0.6",
-    "@types/tampermonkey": "4.0.5",
+    "@types/node": "18.7.14",
     "@vue/runtime-dom": "latest",
     "chalk": "5.0.1",
     "enquirer": "2.3.6",
-    "eslint": "8.20.0",
+    "eslint": "8.23.0",
     "execa": "6.1.0",
     "minimist": "1.2.6",
+    "rollup-plugin-external-globals": "^0.6.1",
     "sass": "1.32.12",
     "semver": "7.3.7",
-    "typescript": "4.7.4",
-    "unplugin-vue2-script-setup": "0.11.0",
-    "vite": "2.9.5",
-    "vite-plugin-tm-userscript": "1.1.5",
-    "vite-plugin-vue2": "2.0.1",
+    "typescript": "4.8.2",
+    "unplugin-vue2-script-setup": "0.11.3",
+    "vite": "3.0.9",
+    "vite-plugin-vue2": "2.0.2",
     "vue-template-compiler": "2.6.14",
-    "vue-tsc": "0.38.9"
+    "vue-tsc": "0.40.4"
   }
 }

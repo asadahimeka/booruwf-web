@@ -43,9 +43,9 @@
     </div>
     <v-menu v-model="showMenu" :position-x="x" :position-y="y" absolute offset-y>
       <v-list>
-        <v-list-item v-if="store.isYKSite" @click="addFavorite">
+        <!-- <v-list-item v-if="store.isYKSite" @click="addFavorite">
           <v-list-item-title>加入收藏</v-list-item-title>
-        </v-list-item>
+        </v-list-item> -->
         <v-list-item @click="openDetail">
           <v-list-item-title>新标签页打开</v-list-item-title>
         </v-list-item>
@@ -78,7 +78,7 @@ import { computed, nextTick, onMounted, onUnmounted, ref, set, watch } from '@vu
 import type Post from '@himeka/booru/dist/structures/Post'
 import PostDetail from './PostDetail.vue'
 import { notReachBottom, throttleScroll } from '@/utils'
-import { addPostToFavorites } from '@/api/moebooru'
+// import { addPostToFavorites } from '@/api/moebooru'
 import { initPosts, refreshPosts, searchPosts } from '@/store/actions/post'
 import store from '@/store'
 
@@ -158,10 +158,10 @@ const addToSelectedList = () => {
   img && store.addToSelectedList(img)
 }
 
-const addFavorite = () => {
-  const img = ctxActPost.value
-  img && addPostToFavorites(img.id)
-}
+// const addFavorite = () => {
+//   const img = ctxActPost.value
+//   img && addPostToFavorites(img.id)
+// }
 
 const onImageLoadError = (url: string) => {
   const item = store.imageList.find(e => e.previewUrl == url)

@@ -11,7 +11,7 @@ export default {
     }
   },
   async mounted() {
-    if (!unsafeWindow.DPlayer) {
+    if (!window.DPlayer) {
       await new Promise(resolve => {
         const script = document.createElement('script')
         script.src = 'https://lib.baomitu.com/dplayer/1.26.0/DPlayer.min.js'
@@ -29,7 +29,7 @@ export default {
   },
   methods: {
     initPlayer() {
-      this.dp = new unsafeWindow.DPlayer({ ...this.options, container: this.$el })
+      this.dp = new window.DPlayer({ ...this.options, container: this.$el })
       const events = this.dp.events
       Object.keys(events).forEach(item => {
         if (item === 'events') {
