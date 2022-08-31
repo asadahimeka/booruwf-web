@@ -84,7 +84,16 @@
           <v-list-item-title class="title">站点列表</v-list-item-title>
         </v-list-item-content>
       </v-list-item>
-      <v-list-item href="https://www.nanoka.top/illust/pixiv/">
+      <v-list-item v-for="link in siteLinks" :key="link" :href="dealLink(link)">
+        <v-list-item-icon class="mr-2">
+          <v-icon>{{ mdiArrowRightCircleOutline }}</v-icon>
+        </v-list-item-icon>
+        <v-list-item-content>
+          <v-list-item-title>{{ link.toUpperCase() }}</v-list-item-title>
+        </v-list-item-content>
+      </v-list-item>
+      <v-divider />
+      <v-list-item link @click="openLink('https://www.nanoka.top/illust/pixiv/')">
         <v-list-item-icon class="mr-2">
           <v-icon>{{ mdiArrowRightCircleOutline }}</v-icon>
         </v-list-item-icon>
@@ -92,12 +101,12 @@
           <v-list-item-title>Pixiv Ranking</v-list-item-title>
         </v-list-item-content>
       </v-list-item>
-      <v-list-item v-for="link in siteLinks" :key="link" :href="dealLink(link)">
+      <v-list-item link @click="openLink('https://pixiv.kanata.ml')">
         <v-list-item-icon class="mr-2">
           <v-icon>{{ mdiArrowRightCircleOutline }}</v-icon>
         </v-list-item-icon>
         <v-list-item-content>
-          <v-list-item-title>{{ link.toUpperCase() }}</v-list-item-title>
+          <v-list-item-title>Pixiv Viewer</v-list-item-title>
         </v-list-item-content>
       </v-list-item>
     </v-list>
@@ -152,6 +161,15 @@
           <v-list-item-subtitle>CHANGELOG.md</v-list-item-subtitle>
         </v-list-item-content>
       </v-list-item>
+      <v-list-item link @click="openLink('https://greasyfork.org/zh-CN/scripts/444885')">
+        <v-list-item-icon class="mr-2">
+          <v-icon>{{ mdiScriptTextPlay }}</v-icon>
+        </v-list-item-icon>
+        <v-list-item-content>
+          <v-list-item-title>用户脚本版本</v-list-item-title>
+          <v-list-item-subtitle>点击安装</v-list-item-subtitle>
+        </v-list-item-content>
+      </v-list-item>
       <v-list-item link @click="openLink('https://github.com/asadahimeka/booruwf-web/issues')">
         <v-list-item-icon class="mr-2">
           <v-icon>{{ mdiMessageAlertOutline }}</v-icon>
@@ -183,6 +201,7 @@ import {
   mdiImageMultiple,
   mdiInformationOutline,
   mdiMessageAlertOutline,
+  mdiScriptTextPlay,
   mdiShuffle,
   // mdiStar,
 } from '@mdi/js'

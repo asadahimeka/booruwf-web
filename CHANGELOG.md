@@ -1,3 +1,9 @@
+## v0.21.1
+
+- feat: 添加用户脚本版本安装链接
+- feat: 添加 Pixiv Ranking 与 Pixiv Viewer 链接
+- fix: 瀑布流初始化时只加载两页，避免某些情况下无限加载
+
 ## v0.21.0
 
 - init: 🎉 修改 yandere-masonry 用户脚本为 Web 版本
