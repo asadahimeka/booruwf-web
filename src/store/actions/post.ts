@@ -63,7 +63,10 @@ export const searchPosts = async () => {
     const posts = await fetchActions.find(e => e.test())?.action()
     if (Array.isArray(posts) && posts.length > 0) {
       store.currentPage = page
-      store.imageList = [...store.imageList, ...posts]
+      store.imageList = [
+        ...store.imageList,
+        ...(store.showNSFWContents ? posts : posts.filter(e => ['s', 'g'].includes(e.rating))),
+      ]
       pushPageState(page)
       page++
     } else {
@@ -76,22 +79,22 @@ export const searchPosts = async () => {
   }
 }
 
-// const calcFetchTimes = () => {
-//   const vcont = document.querySelector('._vcont')
-//   const cnth = vcont?.clientHeight
-//   const doch = document.documentElement.clientHeight
-//   return cnth ? Math.floor(doch / cnth) : 1
-// }
+const calcFetchTimes = () => {
+  const vcont = document.querySelector('._vcont')
+  const cnth = vcont?.clientHeight
+  const doch = document.documentElement.clientHeight
+  return cnth ? Math.floor(doch / cnth) : 1
+}
 
 export const initPosts = async () => {
   await searchPosts()
   if (store.requestStop) return
-  if (location.href.includes('safebooru')) return
-  await searchPosts()
-  // const times = calcFetchTimes()
-  // for (let index = 0; index < times; index++) {
-  //   await searchPosts()
-  // }
+  if (['safebooru', 'konachan'].some(e => location.href.includes(e))) return
+  let times = calcFetchTimes()
+  times = times > 5 ? 5 : times + 1
+  for (let index = 0; index < times; index++) {
+    await searchPosts()
+  }
 }
 
 export const refreshPosts = () => {

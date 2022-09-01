@@ -7,7 +7,7 @@
       </v-list-item-content>
     </v-list-item>
     <v-divider />
-    <v-list v-if="store.isYKSite" dense nav>
+    <v-list v-if="store.showNSFWContents && store.isYKSite" dense nav>
       <v-list-item>
         <v-list-item-content>
           <v-list-item-title class="title">快捷方式</v-list-item-title>
@@ -84,15 +84,6 @@
           <v-list-item-title class="title">站点列表</v-list-item-title>
         </v-list-item-content>
       </v-list-item>
-      <v-list-item v-for="link in siteLinks" :key="link" :href="dealLink(link)">
-        <v-list-item-icon class="mr-2">
-          <v-icon>{{ mdiArrowRightCircleOutline }}</v-icon>
-        </v-list-item-icon>
-        <v-list-item-content>
-          <v-list-item-title>{{ link.toUpperCase() }}</v-list-item-title>
-        </v-list-item-content>
-      </v-list-item>
-      <v-divider />
       <v-list-item link @click="openLink('https://www.nanoka.top/illust/pixiv/')">
         <v-list-item-icon class="mr-2">
           <v-icon>{{ mdiArrowRightCircleOutline }}</v-icon>
@@ -109,11 +100,39 @@
           <v-list-item-title>Pixiv Viewer</v-list-item-title>
         </v-list-item-content>
       </v-list-item>
+      <v-list-item v-for="link in siteLinks" :key="link" :href="dealLink(link)">
+        <v-list-item-icon class="mr-2">
+          <v-icon>{{ mdiArrowRightCircleOutline }}</v-icon>
+        </v-list-item-icon>
+        <v-list-item-content>
+          <v-list-item-title>{{ link.toUpperCase() }}</v-list-item-title>
+        </v-list-item-content>
+      </v-list-item>
     </v-list>
     <v-list dense nav>
+      <v-list-item>
+        <v-list-item-content>
+          <v-list-item-title class="title">设置</v-list-item-title>
+        </v-list-item-content>
+      </v-list-item>
+      <v-list-item>
+        <v-list-item-content>
+          <v-list-item-title>NSFW 开关</v-list-item-title>
+          <v-list-item-subtitle>包含裸露或性描写内容</v-list-item-subtitle>
+        </v-list-item-content>
+        <v-list-item-action>
+          <v-switch
+            v-model="switchValue"
+            color="deep-orange darken-1"
+            :loading="switchLoading"
+            @change="onNSFWSwitchChange"
+          />
+        </v-list-item-action>
+      </v-list-item>
       <v-list-item class="mb-0">
         <v-list-item-content>
-          <v-list-item-title class="title">标签黑名单</v-list-item-title>
+          <v-list-item-title>标签黑名单</v-list-item-title>
+          <v-list-item-subtitle>下方输入标签，回车添加</v-list-item-subtitle>
         </v-list-item-content>
       </v-list-item>
       <v-list-item class="pa-0">
@@ -126,6 +145,8 @@
             hide-details
             hide-no-data
             multiple
+            outlined
+            dense
             chips
             @change="onComboboxChange"
           >
@@ -158,15 +179,15 @@
           <!-- <v-list-item-title>v{{ version }}</v-list-item-title>
           <v-list-item-subtitle>更新日志</v-list-item-subtitle> -->
           <v-list-item-title>更新日志</v-list-item-title>
-          <v-list-item-subtitle>CHANGELOG.md</v-list-item-subtitle>
+          <v-list-item-subtitle>点击查看</v-list-item-subtitle>
         </v-list-item-content>
       </v-list-item>
       <v-list-item link @click="openLink('https://greasyfork.org/zh-CN/scripts/444885')">
         <v-list-item-icon class="mr-2">
-          <v-icon>{{ mdiScriptTextPlay }}</v-icon>
+          <v-icon>{{ mdiScriptTextPlayOutline }}</v-icon>
         </v-list-item-icon>
         <v-list-item-content>
-          <v-list-item-title>用户脚本版本</v-list-item-title>
+          <v-list-item-title>用户脚本版</v-list-item-title>
           <v-list-item-subtitle>点击安装</v-list-item-subtitle>
         </v-list-item-content>
       </v-list-item>
@@ -175,8 +196,8 @@
           <v-icon>{{ mdiMessageAlertOutline }}</v-icon>
         </v-list-item-icon>
         <v-list-item-content>
-          <v-list-item-title>反馈</v-list-item-title>
-          <v-list-item-subtitle>问题与建议</v-list-item-subtitle>
+          <v-list-item-title>问题与建议</v-list-item-title>
+          <v-list-item-subtitle>点击反馈</v-list-item-subtitle>
         </v-list-item-content>
       </v-list-item>
       <v-list-item link @click="openLink('https://github.com/asadahimeka/booruwf-web')">
@@ -189,6 +210,19 @@
         </v-list-item-content>
       </v-list-item>
     </v-list>
+    <v-dialog v-model="showDialog" max-width="300">
+      <v-card>
+        <v-card-title class="text-h5">提示</v-card-title>
+        <v-card-text>
+          确定要开启 NSFW/R-18 作品显示吗？请确保您的年龄已满18岁，且未违反当地法律法规所规定的内容。
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer />
+          <v-btn color="primary" text @click="setNSFWShow('')">取消</v-btn>
+          <v-btn text @click="setNSFWShow('1')">确定</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </v-navigation-drawer>
 </template>
 
@@ -201,20 +235,58 @@ import {
   mdiImageMultiple,
   mdiInformationOutline,
   mdiMessageAlertOutline,
-  mdiScriptTextPlay,
+  mdiScriptTextPlayOutline,
   mdiShuffle,
   // mdiStar,
 } from '@mdi/js'
-import { /* onMounted, */ ref } from '@vue/composition-api'
+import { /* onMounted, */ computed, ref } from '@vue/composition-api'
 import { getCurrSite, siteDomains } from '@/api/booru'
 // import { getUsername } from '@/api/moebooru'
 import store from '@/store'
 
 const host = ref(getCurrSite())
 
-const siteLinks = ref(siteDomains)
+const NSFWSitesMap: Record<string, boolean> = {
+  'rule34.xxx': true,
+  'tbib.org': true,
+  'xbooru.com': true,
+  'rule34.paheal.net': true,
+  'realbooru.com': true,
+}
+
+const siteLinks = computed(() => {
+  return store.showNSFWContents
+    ? siteDomains
+    : siteDomains.filter(e => !NSFWSitesMap[e])
+})
+
 // const userName = ref('')
 // const version = ref(GM_info.script.version)
+
+const showDialog = ref(false)
+const switchValue = ref(store.showNSFWContents)
+const switchLoading = ref(false)
+const returnToIndex = () => {
+  const params = new URLSearchParams(location.search)
+  location.assign(`${location.origin}?site=${params.get('site')}`)
+}
+const setNSFWShow = (val: string) => {
+  store.showNSFWContents = !!val
+  switchValue.value = !!val
+  localStorage.setItem('__showNSFW', val)
+  showDialog.value = false
+  switchLoading.value = false
+  val && returnToIndex()
+}
+const onNSFWSwitchChange = (val: any) => {
+  switchLoading.value = true
+  if (val) {
+    showDialog.value = true
+  } else {
+    setNSFWShow('')
+    returnToIndex()
+  }
+}
 
 const openLink = (link: string) => {
   window.open(link, '_blank', 'noreferrer')

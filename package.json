@@ -1,6 +1,6 @@
 {
   "name": "booruwf",
-  "version": "0.21.1",
+  "version": "0.22.0",
   "private": true,
   "description": "Booru sites masonry browsing mode.",
   "author": "asadahimeka",
@@ -38,6 +38,7 @@
     "typescript": "4.8.2",
     "unplugin-vue2-script-setup": "0.11.3",
     "vite": "3.0.9",
+    "vite-plugin-html": "3.2.0",
     "vite-plugin-vue2": "2.0.2",
     "vue-template-compiler": "2.6.14",
     "vue-tsc": "0.40.4"

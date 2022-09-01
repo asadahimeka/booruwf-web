@@ -1,6 +1,7 @@
 import { URL, fileURLToPath } from 'node:url'
 import { defineConfig } from 'vite'
 import { createVuePlugin as Vue2 } from 'vite-plugin-vue2'
+import { createHtmlPlugin as Html } from 'vite-plugin-html'
 import ScriptSetup from 'unplugin-vue2-script-setup/vite'
 import externalGlobals from 'rollup-plugin-external-globals'
 
@@ -16,6 +17,8 @@ export default defineConfig({
   plugins: [
     // https://github.com/underfin/vite-plugin-vue2
     Vue2({ target: 'esnext' }),
+    // https://github.com/vbenjs/vite-plugin-html
+    Html({ minify: true }),
     // https://github.com/antfu/unplugin-vue2-script-setup
     ScriptSetup(),
   ],

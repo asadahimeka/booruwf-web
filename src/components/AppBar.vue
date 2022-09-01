@@ -72,7 +72,7 @@
         <v-btn title="HIMEYOUKO 的收藏夹" icon @click="fetchTaggedPosts(`vote:3:HIMEYOUKO order:vote`)">
           <v-icon>{{ mdiStar }}</v-icon>
         </v-btn>
-        <v-btn title="图集 (Pool)" icon @click="showPool()">
+        <v-btn v-if="store.showNSFWContents" title="图集 (Pool)" icon @click="showPool()">
           <v-icon :size="20">{{ mdiImageMultiple }}</v-icon>
         </v-btn>
         <v-btn title="人气" icon @click="goToPopularPage()">
@@ -154,7 +154,7 @@
       </v-btn>
       <v-menu dense offset-y :close-on-content-click="false">
         <template #activator="{ on, attrs }">
-          <v-btn title="下载列表" icon v-bind="attrs" v-on="on">
+          <v-btn v-show="store.selectedImageList.length > 0" title="下载列表" icon v-bind="attrs" v-on="on">
             <v-icon>{{ mdiDownload }}</v-icon>
           </v-btn>
         </template>
