@@ -18,7 +18,10 @@ export default defineConfig({
     // https://github.com/underfin/vite-plugin-vue2
     Vue2({ target: 'esnext' }),
     // https://github.com/vbenjs/vite-plugin-html
-    Html({ minify: true }),
+    Html({
+      minify: true,
+      entry: 'src/main.ts',
+    }),
     // https://github.com/antfu/unplugin-vue2-script-setup
     ScriptSetup(),
   ],
