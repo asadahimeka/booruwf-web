@@ -49,7 +49,7 @@
         <v-list-item @click="openDetail">
           <v-list-item-title>新标签页打开</v-list-item-title>
         </v-list-item>
-        <v-list-item @click="addToSelectedList">
+        <v-list-item class="hidden-md-and-down" @click="addToSelectedList">
           <v-list-item-title>加入下载列表</v-list-item-title>
         </v-list-item>
       </v-list>

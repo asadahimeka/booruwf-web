@@ -172,7 +172,7 @@
       <div v-show="!isVideo" class="img_scale_scroll">
         <img :src="scaleOn ? (imageSelected.jpegUrl || imageSelected.fileUrl || void 0) : void 0" alt="">
       </div>
-      <div v-show="!isVideo && showImageToolbar" class="hidden-sm-and-down">
+      <div v-show="!isVideo && showImageToolbar">
         <div style="position: absolute;bottom: 12px;padding: 0 12px;">
           <v-chip
             v-show="postDetail.tags?.length"

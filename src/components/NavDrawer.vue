@@ -1,5 +1,5 @@
 <template>
-  <v-navigation-drawer v-model="store.showDrawer" app temporary>
+  <v-navigation-drawer v-model="store.showDrawer" class="nav_drawer" app temporary>
     <v-list-item>
       <v-list-item-content>
         <v-list-item-title class="title">booruwf</v-list-item-title>
@@ -29,7 +29,7 @@
           <v-list-item-title>我的收藏夹</v-list-item-title>
         </v-list-item-content>
       </v-list-item> -->
-      <v-list-item link :href="`https://${host}/pool?page=1`">
+      <v-list-item link :href="`/?site=${host}&page=1&path=%2Fpool`">
         <v-list-item-icon class="mr-2">
           <v-icon>{{ mdiImageMultiple }}</v-icon>
         </v-list-item-icon>
@@ -37,39 +37,15 @@
           <v-list-item-title>图集 (Pool)</v-list-item-title>
         </v-list-item-content>
       </v-list-item>
-      <v-list-item link :href="`https://${host}/post/popular_recent?period=1d`">
+      <v-list-item link :href="`/?site=${host}&path=%2Fpost%2Fpopular_by_day&page=1`">
         <v-list-item-icon class="mr-2">
           <v-icon>{{ mdiFire }}</v-icon>
         </v-list-item-icon>
         <v-list-item-content>
-          <v-list-item-title>人气作品 (日)</v-list-item-title>
+          <v-list-item-title>人气作品</v-list-item-title>
         </v-list-item-content>
       </v-list-item>
-      <v-list-item link :href="`https://${host}/post/popular_recent?period=1w`">
-        <v-list-item-icon class="mr-2">
-          <v-icon>{{ mdiFire }}</v-icon>
-        </v-list-item-icon>
-        <v-list-item-content>
-          <v-list-item-title>人气作品 (周)</v-list-item-title>
-        </v-list-item-content>
-      </v-list-item>
-      <v-list-item link :href="`https://${host}/post/popular_recent?period=1m`">
-        <v-list-item-icon class="mr-2">
-          <v-icon>{{ mdiFire }}</v-icon>
-        </v-list-item-icon>
-        <v-list-item-content>
-          <v-list-item-title>人气作品 (月)</v-list-item-title>
-        </v-list-item-content>
-      </v-list-item>
-      <v-list-item link :href="`https://${host}/post/popular_recent?period=1y`">
-        <v-list-item-icon class="mr-2">
-          <v-icon>{{ mdiFire }}</v-icon>
-        </v-list-item-icon>
-        <v-list-item-content>
-          <v-list-item-title>人气作品 (年)</v-list-item-title>
-        </v-list-item-content>
-      </v-list-item>
-      <v-list-item link :href="`https://${host}/post?tags=order%3Arandom&page=1`">
+      <v-list-item link :href="`/?site=${host}&page=1&tags=order%3Arandom`">
         <v-list-item-icon class="mr-2">
           <v-icon>{{ mdiShuffle }}</v-icon>
         </v-list-item-icon>
@@ -267,8 +243,7 @@ const showDialog = ref(false)
 const switchValue = ref(store.showNSFWContents)
 const switchLoading = ref(false)
 const returnToIndex = () => {
-  const params = new URLSearchParams(location.search)
-  location.assign(`${location.origin}?site=${params.get('site')}`)
+  location.assign(`${location.origin}?site=${host.value}`)
 }
 const setNSFWShow = (val: string) => {
   store.showNSFWContents = !!val

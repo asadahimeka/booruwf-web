@@ -57,7 +57,7 @@
         <v-icon>{{ mdiHome }}</v-icon>
       </v-btn>
     </div>
-    <div v-else-if="store.showPostList" style="display:flex" class="align-center hidden-sm-and-down">
+    <div v-else-if="store.showPostList" style="display:flex" class="align-center">
       <v-toolbar-title class="hidden-md-and-down" v-text="title" />
       <input
         :value="store.currentPage"
@@ -69,16 +69,16 @@
         <!-- <v-btn v-if="userName" title="收藏夹" icon @click="fetchTaggedPosts(`vote:3:${userName} order:vote`)">
           <v-icon>{{ mdiStar }}</v-icon>
         </v-btn> -->
-        <v-btn title="HIMEYOUKO 的收藏夹" icon @click="fetchTaggedPosts(`vote:3:HIMEYOUKO order:vote`)">
+        <v-btn class="hidden-md-and-down" title="HIMEYOUKO 的收藏夹" icon @click="fetchTaggedPosts(`vote:3:HIMEYOUKO order:vote`)">
           <v-icon>{{ mdiStar }}</v-icon>
         </v-btn>
-        <v-btn v-if="store.showNSFWContents" title="图集 (Pool)" icon @click="showPool()">
+        <v-btn v-if="store.showNSFWContents" class="hidden-md-and-down" title="图集 (Pool)" icon @click="showPool()">
           <v-icon :size="20">{{ mdiImageMultiple }}</v-icon>
         </v-btn>
-        <v-btn title="人气" icon @click="goToPopularPage()">
+        <v-btn class="hidden-md-and-down" title="人气" icon @click="goToPopularPage()">
           <v-icon>{{ mdiFire }}</v-icon>
         </v-btn>
-        <v-btn title="随机" icon @click="fetchTaggedPosts('order:random')">
+        <v-btn class="hidden-md-and-down" title="随机" icon @click="fetchTaggedPosts('order:random')">
           <v-icon>{{ mdiShuffle }}</v-icon>
         </v-btn>
       </template>
@@ -92,7 +92,7 @@
       >
         <template #activator="{ on }">
           <v-slide-x-transition>
-            <div v-show="searchState.showInput" class="ml-4" style="width: 200px">
+            <div v-show="searchState.showInput" class="ml-4">
               <v-text-field
                 v-model="searchState.searchTerm"
                 hide-details
@@ -146,8 +146,8 @@
         </v-list>
       </v-menu>
       <span class="hidden-md-and-down">已选择</span>
-      <span class="ml-1 mr-1" v-text="store.selectedImageList.length"></span>
-      <v-btn icon @click="selectAll">
+      <span class="ml-1 mr-1 hidden-md-and-down" v-text="store.selectedImageList.length"></span>
+      <v-btn class="hidden-md-and-down" icon @click="selectAll">
         <v-icon v-show="isNoSelected">{{ mdiCheckboxBlankOutline }}</v-icon>
         <v-icon v-show="isOneOrMoreSelected">{{ mdiCheckboxIntermediate }}</v-icon>
         <v-icon v-show="isAllSelected">{{ mdiCheckboxMarked }}</v-icon>
@@ -453,7 +453,8 @@ const goToPopularPage = () => {
 const showPool = () => {
   store.showPostList = false
   store.showPoolList = true
-  const url = new URL(location.href)
+  const url = new URL(location.origin)
+  url.searchParams.set('page', '1')
   url.searchParams.set('path', '/pool')
   history.pushState('', '', url)
 }
