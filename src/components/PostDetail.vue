@@ -122,7 +122,7 @@
           <v-list dense flat>
             <v-list-item v-if="imageSelected.sampleUrl" two-line link dense>
               <v-list-item-content @click.stop="download(imageSelected.sampleUrl, imageSelected.sampleDownloadName)">
-                <v-list-item-title>下载缩略图</v-list-item-title>
+                <v-list-item-title>下载样品图</v-list-item-title>
                 <v-list-item-subtitle v-text="imageSelected.sampleDownloadText" />
               </v-list-item-content>
             </v-list-item>
@@ -170,7 +170,7 @@
       <DPlayer v-if="isVideo" style="width: 100%;" :options="{ theme: '#ee8888', autoplay: true, video: { url: imageSelected.fileUrl } }" />
       <!-- <video v-if="isVideo" controls style="width: 100%;" :src="imageSelected.fileUrl ?? void 0"></video> -->
       <div v-show="!isVideo" class="img_scale_scroll">
-        <img :src="scaleOn ? imageSelected.fileUrl ?? void 0 : void 0" alt="">
+        <img :src="scaleOn ? (imageSelected.jpegUrl || imageSelected.fileUrl || void 0) : void 0" alt="">
       </div>
       <div v-show="!isVideo && showImageToolbar" class="hidden-sm-and-down">
         <div style="position: absolute;bottom: 12px;padding: 0 12px;">
