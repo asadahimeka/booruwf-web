@@ -44,7 +44,8 @@
       "node",
       "vue",
       "vuetify",
-      "unplugin-vue2-script-setup/types"
+      "unplugin-vue2-script-setup/types",
+      "vite-plugin-pwa/client"
     ],
   },
   "vueCompilerOptions": {
