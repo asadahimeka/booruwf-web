@@ -25,15 +25,15 @@ export default defineConfig({
       inject: {
         data: {
           cdnCss: [
-            'https://lib.baomitu.com/normalize/8.0.1/normalize.min.css',
+            'https://unpkg.com/normalize.css@8.0.1/normalize.css',
             'https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900',
-            'https://lib.baomitu.com/vuetify/2.6.9/vuetify.min.css',
+            'https://unpkg.com/vuetify@2.6.10/dist/vuetify.min.css',
           ],
           cdnJs: [
-            'https://lib.baomitu.com/vue/2.6.14/vue.min.js',
+            'https://unpkg.com/vue@2.6.14/dist/vue.min.js',
             'https://unpkg.com/@vue/composition-api@1.7.0/dist/vue-composition-api.prod.js',
-            'https://lib.baomitu.com/vuetify/2.6.9/vuetify.min.js',
-            'https://code.bdstatic.com/npm/vue-masonry-css@1.0.3/dist/vue-masonry.min.js',
+            'https://unpkg.com/vuetify@2.6.10/dist/vuetify.min.js',
+            'https://unpkg.com/vue-masonry-css@1.0.3/dist/vue-masonry.min.js',
           ],
         },
       },
