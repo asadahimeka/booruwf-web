@@ -75,7 +75,7 @@
 <script setup lang="ts">
 import { mdiFileGifBox, mdiRefresh, mdiVideo } from '@mdi/js'
 import { computed, nextTick, onMounted, onUnmounted, ref, set, watch } from '@vue/composition-api'
-import type Post from '@himeka/booru/dist/structures/Post'
+import type { Post } from '@himeka/booru'
 import PostDetail from './PostDetail.vue'
 import { notReachBottom, throttleScroll } from '@/utils'
 // import { addPostToFavorites } from '@/api/moebooru'
@@ -127,9 +127,13 @@ const maxHeightStyle = computed(() => {
 
 const getImgSrc = (img?: Post) => {
   if (columnCount.value < 6) {
-    return img?.sampleUrl ?? img?.fileUrl ?? void 0
+    return (img?.sampleUrl && store.imgProxy + img.sampleUrl)
+      ?? (img?.fileUrl && store.imgProxy + img.fileUrl)
+      ?? void 0
   }
-  return img?.previewUrl ?? img?.fileUrl ?? void 0
+  return (img?.previewUrl && store.imgProxy + img.previewUrl)
+      ?? (img?.fileUrl && store.imgProxy + img.fileUrl)
+      ?? void 0
 }
 
 const onCtxMenu = (ev: MouseEvent, img: Post) => {

@@ -1,5 +1,5 @@
 import Vue from 'vue'
-import type Post from '@himeka/booru/dist/structures/Post'
+import type { Post } from '@himeka/booru'
 
 interface SeletedPost extends Post {
   loading?: boolean
@@ -22,6 +22,8 @@ interface AppState {
   showPostList: boolean
   showPoolList: boolean
   showNSFWContents: boolean
+  imgProxy: string
+  imgProxys: {}[]
   toggleDrawer: () => void
   addToSelectedList: (item: Post) => void
 }
@@ -32,6 +34,15 @@ const ykFlag = ['konachan', 'yande.re'].some(e => {
   return site ? site.includes(e) : true
 })
 const poolFlag = Boolean(params.get('path')?.includes('pool'))
+
+const imgProxys = [
+  { text: '不使用', value: '' },
+  { text: '185.242.234.29', value: 'http://185.242.234.29/php/test.php?url=' },
+  { text: 'deno0', value: 'https://cors-fetch.deno.dev/' },
+  { text: 'deno1', value: 'https://cors.deno.dev/' },
+  { text: 'deno2', value: 'https://cors.kanata.ml/' },
+  { text: 'cf0', value: 'https://kwc.cocomi.cf/' },
+]
 
 const store = Vue.observable<AppState>({
   requestState: false,
@@ -49,6 +60,8 @@ const store = Vue.observable<AppState>({
   showPostList: !poolFlag,
   showPoolList: ykFlag && poolFlag,
   showNSFWContents: !!localStorage.getItem('__showNSFW'),
+  imgProxy: localStorage.getItem('__imgProxy') ?? imgProxys[1].value,
+  imgProxys,
   toggleDrawer() {
     store.showDrawer = !store.showDrawer
   },

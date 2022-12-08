@@ -170,7 +170,7 @@
       <DPlayer v-if="isVideo" style="width: 100%;" :options="{ theme: '#ee8888', autoplay: true, video: { url: imageSelected.fileUrl } }" />
       <!-- <video v-if="isVideo" controls style="width: 100%;" :src="imageSelected.fileUrl ?? void 0"></video> -->
       <div v-show="!isVideo" class="img_scale_scroll">
-        <img :src="scaleOn ? (imageSelected.jpegUrl || imageSelected.fileUrl || void 0) : void 0" alt="">
+        <img :src="scaleOn ? scaleImgSrc : void 0" alt="">
       </div>
       <div v-show="!isVideo && showImageToolbar">
         <div style="position: absolute;bottom: 12px;padding: 0 12px;">
@@ -247,13 +247,21 @@ const imageSelected = computed(() => store.imageList[store.imageSelectedIndex] ?
 const isVideo = computed(() => ['.mp4', '.webm'].some(e => imageSelected.value.fileUrl?.endsWith(e)))
 const imgSrc = computed(() => {
   if (isVideo.value) return void 0
-  return imageSelected.value.sampleUrl
-    ?? imageSelected.value.fileUrl
+  return (imageSelected.value.sampleUrl && store.imgProxy + imageSelected.value.sampleUrl)
+    ?? (imageSelected.value.fileUrl && store.imgProxy + imageSelected.value.fileUrl)
     ?? void 0
 })
 const imgLasySrc = computed(() => {
   if (isVideo.value) return void 0
-  return imageSelected.value.previewUrl ?? void 0
+  return imageSelected.value.previewUrl
+    ? store.imgProxy + imageSelected.value.previewUrl
+    : void 0
+})
+
+const scaleImgSrc = computed(() => {
+  return (imageSelected.value.jpegUrl && store.imgProxy + imageSelected.value.jpegUrl)
+    ?? (imageSelected.value.fileUrl && store.imgProxy + imageSelected.value.fileUrl)
+    ?? void 0
 })
 
 const imageSelectedWidth = computed(() => {

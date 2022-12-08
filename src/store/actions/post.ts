@@ -1,4 +1,4 @@
-import type SearchResults from '@himeka/booru/dist/structures/SearchResults'
+import type { SearchResults } from '@himeka/booru'
 import store from '@/store'
 import { BOORU_PAGE_LIMIT, isPidSite, searchBooru } from '@/api/booru'
 import { fetchPostsByPath, isPoolShowPage, isPopularPage } from '@/api/moebooru'
@@ -79,22 +79,18 @@ export const searchPosts = async () => {
   }
 }
 
-const calcFetchTimes = () => {
-  const vcont = document.querySelector('._vcont')
-  const cnth = vcont?.clientHeight
-  const doch = document.documentElement.clientHeight
-  return cnth ? Math.floor(doch / cnth) : 1
-}
+// const calcFetchTimes = () => {
+//   const vcont = document.querySelector('._vcont')
+//   const cnth = vcont?.clientHeight
+//   const doch = document.documentElement.clientHeight
+//   return cnth ? Math.floor(doch / cnth) : 1
+// }
 
 export const initPosts = async () => {
   await searchPosts()
   if (store.requestStop) return
   if (['safebooru', 'konachan'].some(e => location.href.includes(e))) return
-  let times = calcFetchTimes()
-  times = times > 5 ? 5 : times + 1
-  for (let index = 0; index < times; index++) {
-    await searchPosts()
-  }
+  await searchPosts()
 }
 
 export const refreshPosts = () => {

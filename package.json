@@ -15,12 +15,12 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@himeka/booru": "2.7.1",
-    "@vue/composition-api": "1.7.0",
-    "date-fns": "2.29.2",
+    "@himeka/booru": "2.7.6",
+    "@vue/composition-api": "1.7.1",
+    "date-fns": "2.29.3",
     "vue": "2.6.14",
     "vue-masonry-css": "1.0.3",
-    "vuetify": "2.6.9"
+    "vuetify": "2.6.12"
   },
   "devDependencies": {
     "@antfu/eslint-config-vue": "0.26.2",
@@ -34,12 +34,12 @@
     "minimist": "1.2.6",
     "sass": "1.32.12",
     "semver": "7.3.7",
-    "typescript": "4.8.2",
+    "typescript": "4.9.4",
     "unplugin-vue2-script-setup": "0.11.3",
-    "vite": "3.0.9",
+    "vite": "3.2.5",
     "vite-plugin-externals": "0.5.1",
     "vite-plugin-html": "3.2.0",
-    "vite-plugin-pwa": "0.12.7",
+    "vite-plugin-pwa": "0.13.3",
     "vite-plugin-vue2": "2.0.2",
     "vue-template-compiler": "2.6.14",
     "vue-tsc": "0.40.4"

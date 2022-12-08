@@ -2,7 +2,7 @@
   <div>
     <masonry :cols="columnCount" gutter="8px">
       <v-card v-for="item in pools" :key="item.id" class="mb-2">
-        <v-img transition="scroll-y-transition" :src="item.thumb" height="auto" />
+        <v-img transition="scroll-y-transition" :src="store.imgProxy + item.thumb" height="auto" />
         <v-card-title>{{ item.name }}</v-card-title>
         <v-card-subtitle class="pb-0">
           <v-tooltip bottom>
