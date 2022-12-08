@@ -37,7 +37,6 @@ const poolFlag = Boolean(params.get('path')?.includes('pool'))
 
 const imgProxys = [
   { text: '不使用', value: '' },
-  { text: '185.242.234.29', value: 'http://185.242.234.29/php/test.php?url=' },
   { text: 'deno0', value: 'https://cors-fetch.deno.dev/' },
   { text: 'deno1', value: 'https://cors.deno.dev/' },
   { text: 'deno2', value: 'https://cors.kanata.ml/' },
