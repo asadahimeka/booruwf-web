@@ -95,6 +95,7 @@
             <div v-show="searchState.showInput" class="ml-4">
               <v-text-field
                 v-model="searchState.searchTerm"
+                placeholder="输入英文标签"
                 hide-details
                 v-on="on"
                 @keydown="onSearchTermKeydown"
