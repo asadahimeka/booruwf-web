@@ -59,7 +59,7 @@ const store = Vue.observable<AppState>({
   showPostList: !poolFlag,
   showPoolList: ykFlag && poolFlag,
   showNSFWContents: !!localStorage.getItem('__showNSFW'),
-  imgProxy: localStorage.getItem('__imgProxy') ?? imgProxys[1].value,
+  imgProxy: localStorage.getItem('__imgProxy') ?? imgProxys[0].value,
   imgProxys,
   toggleDrawer() {
     store.showDrawer = !store.showDrawer
