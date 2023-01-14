@@ -26,7 +26,7 @@ export default defineConfig({
         data: {
           cdnCss: [
             'https://unpkg.com/normalize.css@8.0.1/normalize.css',
-            'https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900',
+            'https://fonts.loli.net/css?family=Roboto:100,300,400,500,700,900',
             'https://unpkg.com/vuetify@2.6.10/dist/vuetify.min.css',
           ],
           cdnJs: [
@@ -102,7 +102,7 @@ export default defineConfig({
             },
           },
           {
-            urlPattern: /^https:\/\/(lib\.baomitu\.com|unpkg\.com|googleapis\.com|code\.bdstatic\.com)/,
+            urlPattern: /^https:\/\/(lib\.baomitu\.com|unpkg\.com|loli\.net|googleapis\.com|code\.bdstatic\.com)/,
             handler: 'StaleWhileRevalidate',
             options: {
               cacheName: 'cdn-cache',

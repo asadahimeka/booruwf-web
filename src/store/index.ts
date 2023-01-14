@@ -40,6 +40,7 @@ const imgProxys = [
   { text: 'deno0', value: 'https://cors-fetch.deno.dev/' },
   { text: 'deno1', value: 'https://cors.deno.dev/' },
   { text: 'deno2', value: 'https://cors.kanata.ml/' },
+  { text: 'nf0', value: 'https://nfn.kanata.ml/' },
   { text: 'cf0', value: 'https://kwc.cocomi.cf/' },
 ]
 
