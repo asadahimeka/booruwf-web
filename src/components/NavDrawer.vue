@@ -91,7 +91,7 @@
           <v-list-item-title class="title">设置</v-list-item-title>
         </v-list-item-content>
       </v-list-item>
-      <v-list-item class="mb-0">
+      <!-- <v-list-item class="mb-0">
         <v-list-item-content>
           <v-list-item-title>图片代理</v-list-item-title>
           <v-list-item-subtitle>请选择图片代理</v-list-item-subtitle>
@@ -108,7 +108,7 @@
             @change="onImgProxyChange"
           />
         </v-list-item-content>
-      </v-list-item>
+      </v-list-item> -->
       <v-list-item>
         <v-list-item-content>
           <v-list-item-title>NSFW 开关</v-list-item-title>
@@ -301,10 +301,10 @@ const removeTagFromBlacklist = (item: string) => {
   localStorage.setItem('__blacklist', store.blacklist.join(','))
 }
 
-const onImgProxyChange = (val: string) => {
-  localStorage.setItem('__imgProxy', val)
-  location.reload()
-}
+// const onImgProxyChange = (val: string) => {
+//   localStorage.setItem('__imgProxy', val)
+//   location.reload()
+// }
 
 // onMounted(async () => {
 //   if (store.isYKSite) {
