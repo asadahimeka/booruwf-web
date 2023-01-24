@@ -1,18 +1,5 @@
 {
   "github": {
     "silent": true
-  },
-  "redirects": [
-    {
-      "source": "/(.*)",
-      "has": [
-        {
-          "type": "header",
-          "key": "x-vercel-ip-country",
-          "value": "CN"
-        }
-      ],
-      "destination": "https://upload-bbs.miyoushe.com/upload/2023/01/17/190122060/19ecba350039416ac11f847b12089c09_8262556705737981983.png"
-    }
-  ]
+  }
 }
