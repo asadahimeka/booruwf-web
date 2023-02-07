@@ -1,4 +1,4 @@
-import { Post, SearchResults, forSite, sites } from '@himeka/booru'
+import { search, sites } from '@himeka/booru'
 
 const blackList = new Set(['behoimi.org', 'e621.net', 'e926.net', 'hypnohub.net', 'derpibooru.org'])
 export const siteDomains = Object.keys(sites).filter(e => !blackList.has(e))
@@ -32,17 +32,7 @@ export const isPidSite = sites[host]?.paginate === 'pid'
 export async function searchBooru(page: number, tags: string | null) {
   if (!tags || tags === 'all') tags = ''
   if (host === 'konachan.net') tags += ' rating:safe'
-  let url: string
-  if (host.includes('konachan')) {
-    url = `https://cors-fetch.deno.dev/https://konachan.net/post.json?page=${page}&tags=${tags}&limit=${BOORU_PAGE_LIMIT}`
-  } else {
-    url = `https://brkw.kanata.ml/api/search?site=${host}&page=${page}&tags=${tags}&limit=${BOORU_PAGE_LIMIT}`
-  }
-  const response = await fetch(url)
-  const results: [] = await response.json()
-  const site = forSite(host)
-  const posts = results.map(e => new Post(e, site))
-  return new SearchResults(posts, [], {}, site)
+  return search(host, tags, { page, limit: BOORU_PAGE_LIMIT })
 }
 
 let tags: Record<string, string> | null = null

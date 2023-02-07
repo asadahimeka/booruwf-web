@@ -27,12 +27,12 @@ export default defineConfig({
           cdnCss: [
             'https://unpkg.com/normalize.css@8.0.1/normalize.css',
             'https://fonts.loli.net/css?family=Roboto:100,300,400,500,700,900',
-            'https://unpkg.com/vuetify@2.6.10/dist/vuetify.min.css',
+            'https://unpkg.com/vuetify@2.6.14/dist/vuetify.min.css',
           ],
           cdnJs: [
             'https://unpkg.com/vue@2.6.14/dist/vue.min.js',
-            'https://unpkg.com/@vue/composition-api@1.7.0/dist/vue-composition-api.prod.js',
-            'https://unpkg.com/vuetify@2.6.10/dist/vuetify.min.js',
+            'https://unpkg.com/@vue/composition-api@1.7.1/dist/vue-composition-api.prod.js',
+            'https://unpkg.com/vuetify@2.6.14/dist/vuetify.min.js',
             'https://unpkg.com/vue-masonry-css@1.0.3/dist/vue-masonry.min.js',
           ],
         },

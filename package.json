@@ -1,6 +1,6 @@
 {
   "name": "booruwf",
-  "version": "0.21.9",
+  "version": "0.21.10",
   "private": true,
   "description": "Booru sites masonry browsing mode.",
   "author": "asadahimeka",
@@ -20,28 +20,28 @@
     "date-fns": "2.29.3",
     "vue": "2.6.14",
     "vue-masonry-css": "1.0.3",
-    "vuetify": "2.6.12"
+    "vuetify": "2.6.14"
   },
   "devDependencies": {
     "@antfu/eslint-config-vue": "0.26.2",
-    "@mdi/js": "^7.0.96",
-    "@types/node": "18.7.14",
+    "@mdi/js": "^7.1.96",
+    "@types/node": "18.11.19",
     "@vue/runtime-dom": "latest",
-    "chalk": "5.0.1",
+    "chalk": "5.2.0",
     "enquirer": "2.3.6",
-    "eslint": "8.23.0",
+    "eslint": "8.33.0",
     "execa": "6.1.0",
-    "minimist": "1.2.6",
-    "sass": "1.32.12",
-    "semver": "7.3.7",
-    "typescript": "4.9.4",
+    "minimist": "1.2.7",
+    "sass": "1.58.0",
+    "semver": "7.3.8",
+    "typescript": "4.9.5",
     "unplugin-vue2-script-setup": "0.11.3",
     "vite": "3.2.5",
-    "vite-plugin-externals": "0.5.1",
+    "vite-plugin-externals": "0.6.2",
     "vite-plugin-html": "3.2.0",
-    "vite-plugin-pwa": "0.13.3",
-    "vite-plugin-vue2": "2.0.2",
+    "vite-plugin-pwa": "0.14.1",
+    "vite-plugin-vue2": "2.0.3",
     "vue-template-compiler": "2.6.14",
-    "vue-tsc": "0.40.4"
+    "vue-tsc": "1.0.24"
   }
 }

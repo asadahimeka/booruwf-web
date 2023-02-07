@@ -27,8 +27,8 @@ export async function getPostDetail(id: string): Promise<PostDetail | false> {
   try {
     if (!id) return false
     // TODO: Use credentials
-    // const response = await fetch(`https://kw.cocomi.cf/https://${host}/post.json?api_version=2&tags=id:${id}&include_tags=1&include_votes=1`)
-    const response = await fetch(`https://kw.cocomi.cf/https://${host}/post.json?api_version=2&tags=id:${id}&include_tags=1`)
+    // const response = await fetch(`https://${host}/post.json?api_version=2&tags=id:${id}&include_tags=1&include_votes=1`)
+    const response = await fetch(`https://${host}/post.json?api_version=2&tags=id:${id}&include_tags=1`)
     const result = await response.json()
     const tagsCN = await getTranslatedTags()
     return {
@@ -94,7 +94,7 @@ export function isPoolShowPage() {
 
 export async function fetchPostsByPath(postsKey?: string, page?: number): Promise<SearchResults> {
   const params = new URLSearchParams(location.search)
-  const url = new URL(`https://kw.cocomi.cf/https://${host}${params.get('path')}`)
+  const url = new URL(`https://${host}${params.get('path')}`)
   url.pathname += '.json'
   page && url.searchParams.set('page', page.toString())
   const response = await fetch(url)
@@ -137,7 +137,7 @@ export interface Pool {
 }
 
 export async function fetchPools(page: number, query?: string): Promise<Pool[]> {
-  const url = new URL(`https://kw.cocomi.cf/https://${host}/pool.json`)
+  const url = new URL(`https://${host}/pool.json`)
   url.searchParams.set('page', page.toString() || '1')
   query && url.searchParams.set('query', query)
   const jsonResp = await fetch(url)

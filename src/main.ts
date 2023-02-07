@@ -1,4 +1,5 @@
 import '@/styles/custom.css'
+import '@/plugins/fetch'
 
 import Vue from 'vue'
 import VueCompositionAPI from '@vue/composition-api'

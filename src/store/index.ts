@@ -24,6 +24,8 @@ interface AppState {
   showNSFWContents: boolean
   imgProxy: string
   imgProxys: {}[]
+  apiProxy: string
+  apiProxys: {}[]
   toggleDrawer: () => void
   addToSelectedList: (item: Post) => void
 }
@@ -44,6 +46,8 @@ const imgProxys = [
   { text: 'cf0', value: 'https://kwc.cocomi.cf/' },
 ]
 
+const apiProxys = imgProxys.slice(1)
+
 const store = Vue.observable<AppState>({
   requestState: false,
   requestStop: false,
@@ -62,6 +66,8 @@ const store = Vue.observable<AppState>({
   showNSFWContents: !!localStorage.getItem('__showNSFW'),
   imgProxy: localStorage.getItem('__imgProxy') ?? imgProxys[0].value,
   imgProxys,
+  apiProxy: localStorage.getItem('__apiProxy') ?? apiProxys[0].value,
+  apiProxys,
   toggleDrawer() {
     store.showDrawer = !store.showDrawer
   },
