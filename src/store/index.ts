@@ -39,11 +39,11 @@ const poolFlag = Boolean(params.get('path')?.includes('pool'))
 
 const imgProxys = [
   { text: '不使用', value: '' },
-  { text: 'deno0', value: 'https://cors-fetch.deno.dev/' },
-  { text: 'deno1', value: 'https://cors.deno.dev/' },
-  { text: 'deno2', value: 'https://cors.kanata.ml/' },
   { text: 'nf0', value: 'https://nfn.kanata.ml/' },
   { text: 'cf0', value: 'https://kwc.cocomi.cf/' },
+  { text: 'dn0', value: 'https://d.cocomi.cf/' },
+  { text: 'dn1', value: 'https://d1.cocomi.cf/' },
+  { text: 'dn2', value: 'https://prks.kanata.ml/' },
 ]
 
 const apiProxys = imgProxys.slice(1)
