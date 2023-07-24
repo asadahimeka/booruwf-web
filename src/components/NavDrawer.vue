@@ -76,7 +76,7 @@
           <v-list-item-title>Pixiv Ranking</v-list-item-title>
         </v-list-item-content>
       </v-list-item>
-      <v-list-item link @click="openLink('https://pixiv.kanata.ml')">
+      <v-list-item link @click="openLink('https://pixiv.pics')">
         <v-list-item-icon class="mr-2">
           <v-icon>{{ mdiArrowRightCircleOutline }}</v-icon>
         </v-list-item-icon>

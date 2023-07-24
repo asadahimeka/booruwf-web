@@ -1,6 +1,6 @@
 const _fetch = window.fetch
 
-const proxy = localStorage.getItem('__apiProxy') || 'https://nfn.kanata.ml/'
+const proxy = localStorage.getItem('__apiProxy') || 'https://nf.cocomi.eu.org/'
 
 window.fetch = (input: RequestInfo | URL, init?: RequestInit) => {
   let url = input.toString()

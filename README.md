@@ -17,7 +17,7 @@ Build with [vite](https://vitejs.dev)
 
 ## Preview
 
-Web 版本: [点击预览](https://booru.kanata.ml)
+Web 版本: [点击预览](https://booru.vercel.app)
 
 用户脚本版本: [点击安装](https://greasyfork.org/zh-CN/scripts/444885)
 
