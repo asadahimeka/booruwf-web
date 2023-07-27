@@ -68,54 +68,43 @@ export default defineConfig({
         clientsClaim: true,
         runtimeCaching: [
           {
-            urlPattern: /.*\.css/,
+            urlPattern: /.*\.html$/,
             handler: 'StaleWhileRevalidate',
             options: {
-              cacheName: 'css-cache',
-              cacheableResponse: {
-                statuses: [200],
-              },
+              cacheName: 'html-cache',
+              cacheableResponse: { statuses: [0, 200] },
             },
           },
           {
-            urlPattern: /.*\.js/,
-            handler: 'StaleWhileRevalidate',
+            urlPattern: /.*\.(css|js)$/,
+            handler: 'CacheFirst',
             options: {
-              cacheName: 'js-cache',
-              cacheableResponse: {
-                statuses: [200],
-              },
+              cacheName: 'css-js-cache',
+              cacheableResponse: { statuses: [0, 200] },
             },
           },
           {
-            urlPattern: /.*\.(png|gif|jpg|jpeg|svg)/,
-            handler: 'StaleWhileRevalidate',
+            urlPattern: /.*\.(png|gif|jpg|jpeg|ico|svg|mp4)$/,
+            handler: 'CacheFirst',
             options: {
-              cacheName: 'image-cache',
-              cacheableResponse: {
-                statuses: [200],
-              },
-              expiration: {
-                maxEntries: 100,
-                maxAgeSeconds: 31536000,
-              },
+              cacheName: 'media-cache',
+              cacheableResponse: { statuses: [0, 200] },
             },
           },
           {
-            urlPattern: /^https:\/\/(lib\.baomitu\.com|unpkg\.com|loli\.net|googleapis\.com|code\.bdstatic\.com)/,
-            handler: 'StaleWhileRevalidate',
+            urlPattern: /.*(\/post\.json|\/index\.php|\/index\.xml).*/,
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'api-cache',
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
+          {
+            urlPattern: /^https:\/\/(lib\.baomitu\.com|unpkg\.com|loli\.net|googleapis\.com|code\.bdstatic\.com)\/.*/,
+            handler: 'CacheFirst',
             options: {
               cacheName: 'cdn-cache',
-              cacheableResponse: {
-                statuses: [200],
-              },
-              expiration: {
-                maxEntries: 100,
-                maxAgeSeconds: 31536000,
-              },
-              fetchOptions: {
-                credentials: 'include',
-              },
+              cacheableResponse: { statuses: [0, 200] },
             },
           },
         ],
