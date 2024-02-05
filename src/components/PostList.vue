@@ -126,11 +126,11 @@ const maxHeightStyle = computed(() => {
 })
 
 const getImgSrc = (img?: Post) => {
-  if (columnCount.value < 6) {
-    return (img?.sampleUrl && store.imgProxy + img.sampleUrl)
-      ?? (img?.fileUrl && store.imgProxy + img.fileUrl)
-      ?? void 0
-  }
+  // if (columnCount.value < 6) {
+  //   return (img?.sampleUrl && store.imgProxy + img.sampleUrl)
+  //     ?? (img?.fileUrl && store.imgProxy + img.fileUrl)
+  //     ?? void 0
+  // }
   return (img?.previewUrl && store.imgProxy + img.previewUrl)
       ?? (img?.fileUrl && store.imgProxy + img.fileUrl)
       ?? void 0

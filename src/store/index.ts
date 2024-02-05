@@ -39,11 +39,10 @@ const poolFlag = Boolean(params.get('path')?.includes('pool'))
 
 const imgProxys = [
   { text: '不使用', value: '' },
-  { text: 'nf0', value: 'https://nf.cocomi.eu.org/' },
-  { text: 'cf0', value: 'https://kwc.cocomi.cf/' },
-  { text: 'dn0', value: 'https://d.cocomi.cf/' },
-  { text: 'dn1', value: 'https://d1.cocomi.cf/' },
-  { text: 'dn2', value: 'https://prks-984c63fb.deno.dev/' },
+  ...(import.meta.env.VITE_APP_PROXYS as string || '').split(';').map(e => {
+    const [text, value] = e.split(',')
+    return { text, value }
+  }),
 ]
 
 const apiProxys = imgProxys.slice(1)
