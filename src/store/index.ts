@@ -37,7 +37,7 @@ const ykFlag = ['konachan', 'yande.re'].some(e => {
 })
 const poolFlag = Boolean(params.get('path')?.includes('pool'))
 
-const imgProxys = [
+export const imgProxys = [
   { text: '不使用', value: '' },
   ...(import.meta.env.VITE_APP_PROXYS as string || '').split(';').map(e => {
     const [text, value] = e.split(',')
@@ -45,7 +45,7 @@ const imgProxys = [
   }),
 ]
 
-const apiProxys = imgProxys.slice(1)
+export const apiProxys = imgProxys.slice(1)
 
 const store = Vue.observable<AppState>({
   requestState: false,
