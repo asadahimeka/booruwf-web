@@ -8,7 +8,6 @@
  * - 缓存为内存级（Map + TTL），不落盘
  */
 import { Hono } from 'hono'
-import { etag } from 'hono/etag'
 import { secureHeaders } from 'hono/secure-headers'
 import { proxyHandler } from './proxy.ts'
 import { imgHandler } from './img.ts'
@@ -34,7 +33,6 @@ export function createApp({ serveStatic, distRoot }: AppOptions) {
     console.log(start.toLocaleString('zh'), ctx.req.method, ctx.res.status, time, ctx.req.url.slice(0, 150), ctx.req.header('User-Agent'), ctx.req.header('Origin'), ctx.req.header('Referer'))
   })
   app.use(secureHeaders({ crossOriginResourcePolicy: 'same-site' }))
-  app.get('*', etag())
 
   // --- 代理网关（先于静态路由注册，避免被 SPA fallback 吞掉） ---
   app.get('/proxy/*', proxyHandler)
@@ -56,13 +54,13 @@ export function createApp({ serveStatic, distRoot }: AppOptions) {
       || path.startsWith('workbox-')
       || path === '/favicon.ico'
       || path === '/robots.txt') {
-      c.header('cache-control', 'public, max-age=31536000, immutable')
+      c.res.headers.set('cache-control', 'public, max-age=31536000, immutable')
     } else if (
       path === '/'
       || path === '/index.html'
       || path === '/sw.js'
       || path === '/manifest.json') {
-      c.header('cache-control', 'no-cache')
+      c.res.headers.set('cache-control', 'no-cache')
     }
   })
 
