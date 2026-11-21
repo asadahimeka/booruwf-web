@@ -1,0 +1,26 @@
+{
+  "name": "booruwf-server",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "booruwf-web companion server: static hosting + /proxy /img /dl gateway (Hono, Node/Deno/Bun compatible).",
+  "license": "MIT",
+  "scripts": {
+    "dev": "tsx watch src/entry/node.ts",
+    "start": "tsx src/entry/node.ts",
+    "start:bun": "bun src/entry/bun.ts",
+    "start:deno": "deno run -A --node-modules-dir src/entry/deno.ts",
+    "check": "tsc --noEmit",
+    "smoke": "tsx src/smoke.ts"
+  },
+  "dependencies": {
+    "@hono/node-server": "^2.1.11",
+    "hono": "^4.13.19",
+    "undici": "^8.12.4"
+  },
+  "devDependencies": {
+    "@types/node": "^22",
+    "tsx": "^4.23.15",
+    "typescript": "^5"
+  }
+}

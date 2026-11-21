@@ -30,9 +30,7 @@
     "noUnusedLocals": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": [
-        "src/*"
-      ]
+      "@/*": ["src/*"]
     },
     "lib": [
       "ESNext",
@@ -44,31 +42,21 @@
       "node",
       "vue",
       "vuetify",
-      "unplugin-vue2-script-setup/types",
       "vite-plugin-pwa/client"
     ],
   },
   "vueCompilerOptions": {
-    "target": 2,
-    "experimentalTemplateCompilerOptions": {
-      "compatConfig": {
-        "MODE": 2
-      }
-    }
+    "target": 2.7
   },
   "include": [
     "src/**/*.ts",
     "src/**/*.d.ts",
     "src/**/*.tsx",
-    "src/**/*.vue"
+    "src/**/*.vue",
+    "vite.config.ts"
   ],
   "exclude": [
     "node_modules",
     "dist"
-  ],
-  "references": [
-    {
-      "path": "./tsconfig.node.json"
-    }
   ]
 }

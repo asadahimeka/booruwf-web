@@ -12,6 +12,10 @@ dist
 dist-ssr
 *.local
 
+# Playwright
+test-results
+playwright-report
+
 # Editor directories and files
 .idea
 .DS_Store
@@ -20,3 +24,5 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+.workbuddy
