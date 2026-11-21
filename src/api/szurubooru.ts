@@ -1,4 +1,4 @@
-import { apiFetch } from './gateway'
+import { apiFetch, normalizeSzuruDomain } from './gateway'
 import { settings } from '@/store'
 import { siteContext } from '@/site-context'
 
@@ -12,16 +12,7 @@ const safetyRatingMap: Record<string, string> = {
   unsafe: 'e',
 }
 
-// 兼容用户粘贴 "https://xxx/" 或裸域名
-export function normalizeSzuruDomain(input: string) {
-  const value = (input || '').trim()
-  if (!value) return ''
-  try {
-    return new URL(value.includes('://') ? value : `https://${value}`).host
-  } catch {
-    return ''
-  }
-}
+export { normalizeSzuruDomain }
 
 export function isConfiguredSzuruDomain(host: string) {
   return settings.szurubooruConfigs.some(c => normalizeSzuruDomain(c.domain) === host)
@@ -39,7 +30,7 @@ function currentConfig() {
   return settings.szurubooruConfigs.find(c => normalizeSzuruDomain(c.domain) === siteContext.host)
 }
 
-function authHeaders(): Record<string, string> {
+export function szuruAuthHeaders(): Record<string, string> {
   const headers: Record<string, string> = { Accept: 'application/json' }
   const config = currentConfig()
   if (config?.username && config?.token) {
@@ -63,7 +54,7 @@ export async function fetchSzurubooruPosts(page: number, tags: string | null) {
   if (tags && tags !== 'all') {
     url.searchParams.set('query', tags)
   }
-  const text = await apiFetch(url.href, { headers: authHeaders() })
+  const text = await apiFetch(url.href, { headers: szuruAuthHeaders() })
   const json = JSON.parse(text)
   return (json.results || []).map((e: any) => {
     const fileExt = e.mimeType?.split('/')[1] || String(e.contentUrl || '').split('.').pop() || 'jpg'
@@ -92,4 +83,38 @@ export async function fetchSzurubooruPosts(page: number, tags: string | null) {
 export const szurubooru = {
   is: isSzurubooru,
   posts: fetchSzurubooruPosts,
+}
+
+/**
+ * 标签补全。
+ *
+ * 标准 szurubooru 走 `/api/tag-suggestions/?query=`（匿名可用的字符串数组）；
+ * 部分实例/分支没有这个路由（实测 h.7279744.xyz 返回 404 Route not found），
+ * 回退到 `/api/tags/?query=`（需认证，返回 {results:[{names}]}）。
+ * 两者都失败时静默降级为空列表。
+ */
+export async function fetchSzurubooruAutocomplete(term: string) {
+  try {
+    const text = await apiFetch(
+      `${siteContext.origin}/api/tag-suggestions/?query=${encodeURIComponent(term)}`,
+      { headers: szuruAuthHeaders() },
+    )
+    const result = JSON.parse(text) as string[]
+    if (Array.isArray(result)) return result.slice(0, 20)
+  } catch {
+    // 无该路由（404）或不可用：走 tags 搜索回退
+  }
+  try {
+    const text = await apiFetch(
+      `${siteContext.origin}/api/tags/?query=${encodeURIComponent(term)}&limit=20`,
+      { headers: szuruAuthHeaders() },
+    )
+    const result = JSON.parse(text) as { results?: Array<{ names?: string[] }> }
+    return (result.results || [])
+      .map(e => e.names?.[0])
+      .filter((name): name is string => !!name)
+      .slice(0, 20)
+  } catch {
+    return []
+  }
 }

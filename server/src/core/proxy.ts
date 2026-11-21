@@ -10,7 +10,7 @@
  * 原始请求，对前端完全透明。
  */
 import type { Context } from 'hono'
-import { isAllowedDomain, resolveRule } from './sites.ts'
+import { isAllowedDomain, isClaimedDomain, resolveRule } from './sites.ts'
 import { upstreamFetch } from './runtime.ts'
 import type { SiteRule } from './sites.ts'
 
@@ -26,7 +26,8 @@ export async function proxyHandler(c: Context) {
 
   const url = new URL(target)
   if (!/^https?:$/.test(url.protocol)) return c.json({ error: 'invalid protocol' }, 400)
-  if (!isAllowedDomain(url)) return c.json({ error: `domain not allowed: ${url.hostname}` }, 403)
+  if (!isAllowedDomain(url) && !isClaimedDomain(url, c.req.query('claim')))
+    return c.json({ error: `domain not allowed: ${url.hostname}` }, 403)
 
   const rule = resolveRule(url)
   const headers = new Headers()
@@ -36,6 +37,9 @@ export async function proxyHandler(c: Context) {
   // 透传前端需要的安全头以外的部分（cookie 一律不透传：登录态功能不做）
   const accept = c.req.header('accept')
   if (accept) headers.set('accept', accept)
+  // 自部署 szurubooru 等需要认证的站点：前端把 Token base64 放在 Authorization 里
+  const authorization = c.req.header('authorization')
+  if (authorization) headers.set('authorization', authorization)
 
   // POST 转发（如 hentaiclub 的站内搜索）：透传请求体与 content-type；缓存只针对 GET
   const isPost = c.req.method === 'POST'

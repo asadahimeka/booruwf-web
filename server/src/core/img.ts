@@ -5,7 +5,7 @@
  * 透传 Range / Content-Range（视频拖动进度条依赖 ranged request）。
  */
 import type { Context } from 'hono'
-import { isAllowedImageDomain, resolveRule } from './sites.ts'
+import { isAllowedImageDomain, isClaimedDomain, resolveRule } from './sites.ts'
 import { upstreamFetch } from './runtime.ts'
 
 export async function imgHandler(c: Context) {
@@ -14,7 +14,9 @@ export async function imgHandler(c: Context) {
 
   const url = new URL(target)
   if (!/^https?:$/.test(url.protocol)) return c.json({ error: 'invalid protocol' }, 400)
-  if (!isAllowedImageDomain(url)) return c.json({ error: `domain not allowed: ${url.hostname}` }, 403)
+  // claim 供 IMG_ALLOW_ANY_HOST=0（纯白名单模式）时放行用户配置的自定义站点域
+  if (!isAllowedImageDomain(url) && !isClaimedDomain(url, c.req.query('claim')))
+    return c.json({ error: `domain not allowed: ${url.hostname}` }, 403)
 
   const rule = resolveRule(url)
   const headers = new Headers()

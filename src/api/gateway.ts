@@ -22,11 +22,40 @@ function serverBase(): string {
   return custom ? custom.replace(/\/$/, '') : ''
 }
 
+// 兼容用户粘贴 "https://xxx/" 或裸域名
+export function normalizeSzuruDomain(input: string) {
+  const value = (input || '').trim()
+  if (!value) return ''
+  try {
+    return new URL(value.includes('://') ? value : `https://${value}`).host
+  } catch {
+    return ''
+  }
+}
+
+/**
+ * 目标 host 是用户配置的自部署 szurubooru 域时，随代理请求以 `claim` 参数
+ * 声明该域：自定义域不在服务端内置白名单里，服务端校验「声明域 == 目标域」
+ * 且为公网 https 后放行（/proxy /dl /img）。第三方前缀代理走不到这套机制。
+ */
+function szuruClaimParam(target: string): string {
+  const configs = settings.szurubooruConfigs
+  if (!configs?.length) return ''
+  let host = ''
+  try {
+    host = new URL(target).hostname.toLowerCase()
+  } catch {
+    return ''
+  }
+  const hit = configs.some(c => normalizeSzuruDomain(c.domain).toLowerCase() === host)
+  return hit ? `&claim=${encodeURIComponent(host)}` : ''
+}
+
 /** 把上游 URL 重写为 API 代理地址：内置服务端 /proxy 或第三方前缀代理 */
 function toApiProxyUrl(target: string): string {
   const proxy = settings.apiProxy
   if (proxy && proxy !== '__server') return proxy + target
-  return `${serverBase()}/proxy?url=${encodeURIComponent(target)}`
+  return `${serverBase()}/proxy?url=${encodeURIComponent(target)}${szuruClaimParam(target)}`
 }
 
 export function setApiServer(base: string) {
@@ -87,11 +116,12 @@ export async function apiFetchJson<T = any>(input: string | URL, options: ApiFet
 
 /** 把站点图片/视频 URL 重写为服务端图片代理地址（防盗链伪装在服务端规则表里） */
 export function toProxyImgUrl(url: string | null | undefined) {
-  return url ? `${serverBase()}/img?url=${encodeURIComponent(url)}` : url
+  // claim：IMG_ALLOW_ANY_HOST=0（纯白名单模式）时放行用户配置的自定义站点域
+  return url ? `${serverBase()}/img?url=${encodeURIComponent(url)}${szuruClaimParam(url)}` : url
 }
 
 /** 把下载 URL 重写为服务端下载代理地址（Content-Disposition 附件） */
 export function toProxyDlUrl(url: string, name?: string) {
   const nameQ = name ? `&name=${encodeURIComponent(name)}` : ''
-  return `${serverBase()}/dl?url=${encodeURIComponent(url)}${nameQ}`
+  return `${serverBase()}/dl?url=${encodeURIComponent(url)}${nameQ}${szuruClaimParam(url)}`
 }

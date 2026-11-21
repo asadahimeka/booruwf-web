@@ -1,4 +1,5 @@
 import { apiFetch } from './gateway'
+import { fetchSzurubooruAutocomplete, isSzurubooru } from './szurubooru'
 import { siteContext } from '@/site-context'
 
 async function fetchDanbooruAutocomplete(term: string) {
@@ -58,5 +59,9 @@ const autocompleteActions: Record<string, (term: string) => Promise<string[]>> =
   'e-shuushuu.net': fetchEshuushuuAutocomplete,
 }
 
-export const isAutocompleteAct = Object.keys(autocompleteActions).includes(siteContext.host)
-export const fetchAutocomplete = autocompleteActions[siteContext.host] || (() => {})
+// 自部署 szurubooru 的域名是用户配置的，无法按 host 建表，走统一判定
+export const isAutocompleteAct = isSzurubooru()
+  || Object.keys(autocompleteActions).includes(siteContext.host)
+export const fetchAutocomplete = isSzurubooru()
+  ? fetchSzurubooruAutocomplete
+  : autocompleteActions[siteContext.host] || (() => {})

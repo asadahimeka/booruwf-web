@@ -4,7 +4,7 @@
  * 下载代理：带 Content-Disposition 返回附件，解决跨域 <a download> 失效问题。
  */
 import type { Context } from 'hono'
-import { isAllowedDomain, resolveRule } from './sites.ts'
+import { isAllowedDomain, isClaimedDomain, resolveRule } from './sites.ts'
 import { upstreamFetch } from './runtime.ts'
 
 export async function dlHandler(c: Context) {
@@ -13,7 +13,8 @@ export async function dlHandler(c: Context) {
 
   const url = new URL(target)
   if (!/^https?:$/.test(url.protocol)) return c.json({ error: 'invalid protocol' }, 400)
-  if (!isAllowedDomain(url)) return c.json({ error: `domain not allowed: ${url.hostname}` }, 403)
+  if (!isAllowedDomain(url) && !isClaimedDomain(url, c.req.query('claim')))
+    return c.json({ error: `domain not allowed: ${url.hostname}` }, 403)
 
   const rule = resolveRule(url)
   const headers = new Headers()

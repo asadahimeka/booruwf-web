@@ -182,3 +182,17 @@ export function isAllowedImageDomain(url: URL): boolean {
   if (isAllowedDomain(url)) return true
   return allowAnyImageHost && url.protocol === 'https:' && PUBLIC_HOST_RE.test(url.hostname)
 }
+
+/**
+ * 前端声明的自定义站点域（自部署 szurubooru 等）。
+ *
+ * 用户在应用设置里配置的站点域不在内置白名单里，服务端也看不到浏览器
+ * localStorage。前端随代理请求以 `claim` 参数声明目标域，服务端校验
+ * 「声明域 == 目标域」且是语法合法的公网 https 域后放行 —— 声明与目标
+ * 绑定，不能借它访问声明之外的域。姿态与 /img 的公网放开一致。
+ */
+export function isClaimedDomain(url: URL, claim: string | undefined | null): boolean {
+  const host = claim?.trim().toLowerCase()
+  if (!host || url.protocol !== 'https:') return false
+  return url.hostname.toLowerCase() === host && PUBLIC_HOST_RE.test(host)
+}
