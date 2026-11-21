@@ -1,13 +1,5 @@
-// Styles
-// import '@mdi/font/css/materialdesignicons.css'
-// import 'vuetify/dist/vuetify.min.css'
-
-import Vue from 'vue'
+import Vue, { getCurrentInstance } from 'vue'
 import Vuetify from 'vuetify'
-import { getCurrentInstance } from '@vue/composition-api'
-// import { loadFonts } from './webfontloader'
-
-// loadFonts()
 
 function installVuetify() {
   Vue.use(Vuetify)
@@ -16,11 +8,11 @@ function installVuetify() {
       iconfont: 'mdiSvg',
     },
     theme: {
-      dark: true,
+      dark: false,
       themes: {
         light: {
-          primary: '#8E24AA',
-          accent: '#EC407A',
+          primary: '#1a73e8',
+          accent: '#c2e7ff',
         },
         dark: {
           primary: '#BA68C8',

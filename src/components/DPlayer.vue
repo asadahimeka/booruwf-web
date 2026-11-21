@@ -1,4 +1,8 @@
-<script>
+<script lang="ts">
+import DPlayer from 'dplayer'
+// dplayer@1.27 的 dist 里没有独立 CSS，样式已随 JS 注入
+
+// web 版：DPlayer 本地打包（脚本版为 CDN 注入 + unsafeWindow）
 export default {
   props: {
     options: {
@@ -7,35 +11,26 @@ export default {
   },
   data() {
     return {
-      dp: null,
+      dp: null as any,
     }
   },
   async mounted() {
-    if (!window.DPlayer) {
-      await new Promise(resolve => {
-        const script = document.createElement('script')
-        script.src = 'https://unpkg.com/dplayer@1.26.0/dist/DPlayer.min.js'
-        script.addEventListener('load', resolve, false)
-        document.head.appendChild(script)
-      })
-    }
     await this.$nextTick()
     this.initPlayer()
   },
-  // eslint-disable-next-line vue/no-deprecated-destroyed-lifecycle
-  beforeDestroy() {
-    this.dp.destroy()
+  beforeUnmount() {
+    this.dp?.destroy()
     this.dp = null
   },
   methods: {
     initPlayer() {
-      this.dp = new window.DPlayer({ ...this.options, container: this.$el })
-      const events = this.dp.events
+      this.dp = new DPlayer({ ...this.options, container: this.$el } as any)
+      const events = (this.dp as any).events
       Object.keys(events).forEach(item => {
         if (item === 'events') {
           return false
         } else {
-          events[item].forEach(event => {
+          events[item].forEach((event: string) => {
             this.dp.on(event, () => this.$emit(event))
           })
         }

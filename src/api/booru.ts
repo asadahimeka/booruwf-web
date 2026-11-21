@@ -1,45 +1,149 @@
 import { search, sites } from '@himeka/booru'
+import { getBooruSiteHosts, getNavDomains, getSiteTitle as getRegisteredSiteTitle, getSiteMeta } from './sites'
+import { rule34 } from './rule34'
+import { realbooru } from './realbooru'
+import { isSankakuSite } from './sankaku'
+import { animepictures } from './anime-pictures'
+import { isConfiguredSzuruDomain, szurubooru } from './szurubooru'
+import { isMikubooru } from './mikubooru'
+import { everiaPresetTags, isEveriaList } from './everia'
+import { hentaiCosplayPresetTags, isHentaiCosplayList } from './hentaicosplay'
+import { hentaiclubPresetTags, isHentaiclubList } from './hentaiclub'
+import { huamaoPresetTags, isHuamaoList } from './huamao'
+import { isWallhavenList, wallhavenPresetTags } from './wallhaven'
+import { cinPresetTags, isCinList } from './cin'
+import { isShaonvzhiList, shaonvzhiPresetTags } from './shaonvzhi'
+import { dimtownPresetTags, isDimtownList } from './dimtown'
+import { siteContext } from '@/site-context'
+import store, { settings } from '@/store'
 
-const blackList = new Set(['behoimi.org', 'e621.net', 'e926.net', 'hypnohub.net', 'derpibooru.org'])
-export const siteDomains = Object.keys(sites).filter(e => !blackList.has(e))
+/**
+ * 包内站点通用实现（booruAction）。
+ *
+ * 自脚本版移植的改动：
+ * - `location.host` → `siteContext.host`（?site= 驱动）
+ */
 
-const defaultLimitMap: Record<string, number> = {
-  'yande.re': 40,
-  'konachan.com': 21,
-  'konachan.net': 21,
-  'danbooru.donmai.us': 20,
-  'gelbooru.com': 42,
-  'rule34.xxx': 42,
-  'safebooru.org': 40,
-  'tbib.org': 42,
-  'xbooru.com': 42,
-  'rule34.paheal.net': 70,
-  'realbooru.com': 42,
+/**
+ * 导航抽屉里显示的站点域名：包内站点 + 手写站点（navHost 非空者）。
+ * 与脚本版 `getNavDomains()` 行为一致。
+ */
+export const siteDomains = getNavDomains()
+
+const siteKeys = getBooruSiteHosts()
+export const isBooruSite = () => siteKeys.includes(siteContext.host)
+
+/** web 兼容别名：站点上下文里的当前域名（旧组件还在用） */
+export const getCurrSite = () => siteContext.host
+
+export const isSupportTagSearch = isBooruSite() || getSiteMeta(siteContext.host)?.tagSearch !== false
+export const notPartialSupportSite = getSiteMeta(siteContext.host)?.partialSupport !== true
+
+export const isSampleDownloadSupportedSite = () => {
+  return notPartialSupportSite && (isBooruSite() || getSiteMeta(siteContext.host)?.sampleDownload === true)
 }
 
-export function getCurrSite() {
-  const params = new URLSearchParams(location.search)
-  const site = params.get('site')
-  return (site && siteDomains.includes(site)) ? site : 'yande.re'
+export const defCompTags = (() => {
+  if (store.isYKSite) {
+    return ['rating:s', 'rating:q', 'rating:e', 'order:score', 'order:vote', 'order:mpixels', 'order:landscape', 'order:portrait']
+  }
+  if (isSankakuSite) {
+    return ['order:quality', 'order:popularity', 'order:random', 'order:recently_favorited', 'order:recently_voted', 'rating:s', 'rating:q', 'rating:e', 'threshold:0', 'threshold:1', 'threshold:2', 'threshold:3', 'threshold:4', 'threshold:5', 'sankaku_ai order:popular']
+  }
+  if (animepictures.is()) {
+    return ['order_by:date', 'order_by:date_r', 'order_by:rating', 'order_by:views', 'order_by:size', 'order_by:tag_num']
+  }
+  if (siteContext.host.includes('danbooru')) {
+    return ['order:rank', 'order:score', 'order:favcount', 'order:none', 'order:upvotes', 'rating:general', 'rating:questionable', 'rating:explicit', 'rating:sensitive', 'order:landscape', 'order:portrait', 'order:mpixels']
+  }
+  if (/gelbooru\.com|rule34\.xxx/.test(siteContext.host)) {
+    return ['rating:safe', 'rating:questionable', 'rating:explicit', 'sort:score']
+  }
+  if (szurubooru.is()) {
+    return [
+      'safety:safe', 'safety:sketchy', 'safety:unsafe',
+      'sort:random', 'sort:score', 'sort:fav-count', 'sort:tag-count', 'sort:comment-count', 'sort:last-edit',
+      'type:image', 'type:animation', 'type:video',
+    ]
+  }
+  if (isMikubooru()) {
+    return [
+      'rating:safe', 'rating:questionable', 'rating:explicit',
+      'order:date_desc', 'order:id_desc', 'order:score_desc', 'order:size_desc',
+    ]
+  }
+  // everia 没有标签体系，搜索框里放的是站内分类（首页 / 日本 / 韩国 …）
+  if (isEveriaList()) return everiaPresetTags
+  // 下面三个站同理：搜索框复用作列表入口，词由各自适配器解析成路径或查询参数
+  if (isHentaiCosplayList()) return hentaiCosplayPresetTags
+  if (isHentaiclubList()) return hentaiclubPresetTags
+  if (isHuamaoList()) return huamaoPresetTags
+  // wallhaven 有站内搜索，预设词是分区入口（latest / hot / toplist / random）
+  if (isWallhavenList()) return wallhavenPresetTags
+  // cin.wtf 没有分类页，候选只能是查询语法，词会整串透传给站内搜索接口
+  if (isCinList()) return cinPresetTags
+  // 少女志的候选是站点分类名，进 REST 时会被翻成 categories= / search=
+  if (isShaonvzhiList()) return shaonvzhiPresetTags
+  // dimtown 同理：分类名 → category=，其余词 → search=
+  if (isDimtownList()) return dimtownPresetTags
+  return []
+})()
+
+export function getSiteTitle(domain: string = siteContext.host) {
+  const host = domain.toLowerCase().replace('www.', '')
+  const title = getRegisteredSiteTitle(domain)
+  if (title) return title
+  if (isConfiguredSzuruDomain(host)) return 'Szurubooru'
+  return host[0].toUpperCase() + host.slice(1).split('.')[0]
 }
 
-const host = getCurrSite()
+export const BOORU_PAGE_LIMIT = getSiteMeta(siteContext.host)?.pageLimit || 40
 
-export const BOORU_PAGE_LIMIT = defaultLimitMap[host] || 40
+export const isPidSite = () => sites[siteContext.host]?.paginate === 'pid' || realbooru.is()
 
-export const isPidSite = sites[host]?.paginate === 'pid'
+/**
+ * 当前站点的 API 凭证 query（如 '&api_key=xx&user_id=1'），按 host 分槽存于
+ * settings.credentialQueries。无凭证返回 ''。
+ * 约束 query 形如 '&k=v' 或 '?k=v' 开头，避免误填站点名等垃圾值被拼进 URL。
+ */
+export function currentCredentialQuery(): string {
+  const q = (settings.credentialQueries?.[siteContext.host] ?? '').trim()
+  return /^[?&][^&=]+=[^&]*/.test(q) ? q : ''
+}
 
 export async function searchBooru(page: number, tags: string | null) {
   if (!tags || tags === 'all') tags = ''
-  if (host === 'konachan.net') tags += ' rating:safe'
-  return search(host, tags, { page, limit: BOORU_PAGE_LIMIT })
+  return search(siteContext.host, tags, {
+    page,
+    limit: BOORU_PAGE_LIMIT,
+    // API key 等凭证走查询参数（danbooru / gelbooru 等支持），是 web 版唯一可用的凭证方式
+    credentials: {
+      query: currentCredentialQuery(),
+    },
+  })
 }
 
-let tags: Record<string, string> | null = null
-export async function getTranslatedTags() {
-  if (!tags) {
-    const response = await fetch('https://fastly.jsdelivr.net/gh/asadahimeka/yandere-masonry@main/src/data/tags_cn.json')
-    tags = await response.json()
-  }
-  return tags
+export const booruAction = {
+  is: isBooruSite,
+  posts: async (page: number, tags: string | null) => {
+    if (settings.isHoldsFalse) tags = `holds:false ${tags || ''}`.trim()
+    const results = await searchBooru(page, tags)
+    if (rule34.is()) {
+      results.forEach(e => {
+        const re = /api-cdn[^.]*\./
+        if (e.previewUrl) e.previewUrl = e.previewUrl.replace(re, '')
+        if (e.sampleUrl) e.sampleUrl = e.sampleUrl.replace(re, '')
+        if (e.fileUrl) e.fileUrl = e.fileUrl.replace(re, '')
+      })
+    }
+    if (siteContext.host == 'xbooru.com') {
+      results.forEach(e => {
+        const args = [/api-cdn(-mp4)?\.rule34\.xxx/, 'xbooru.com'] as const
+        if (e.previewUrl) e.previewUrl = e.previewUrl.replace(...args)
+        if (e.sampleUrl) e.sampleUrl = e.sampleUrl.replace(...args)
+        if (e.fileUrl) e.fileUrl = e.fileUrl.replace(...args)
+      })
+    }
+    return results
+  },
 }

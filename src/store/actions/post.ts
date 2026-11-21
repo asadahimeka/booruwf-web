@@ -1,100 +1,87 @@
-import type { SearchResults } from '@himeka/booru'
-import store from '@/store'
-import { BOORU_PAGE_LIMIT, isPidSite, searchBooru } from '@/api/booru'
-import { fetchPostsByPath, isPoolShowPage, isPopularPage } from '@/api/moebooru'
-
-function getFirstPageNo(params: URLSearchParams) {
-  if (isPidSite) {
-    const page = Number(params.get('pid')) || 0
-    return Math.trunc(page / BOORU_PAGE_LIMIT) + 1
-  }
-  return Number(params.get('page')) || 1
-}
-
-function pushPageState(pageNo: number) {
-  let pageParamName = 'page'
-  if (isPidSite) {
-    pageParamName = 'pid'
-    pageNo = (pageNo - 1) * BOORU_PAGE_LIMIT
-  }
-  const url = new URL(location.href)
-  url.searchParams.set(pageParamName, pageNo.toString())
-  history.replaceState('', '', url)
-}
-
-function dealBlacklist(results: SearchResults) {
-  return store.blacklist.length
-    ? results.blacklist(store.blacklist)
-    : results
-}
+import { nextTick } from 'vue'
+import { siteActions } from './site'
+import { getFirstPageNo, handleBlacklist, pushPageState } from './_util'
+import { settings, store } from '@/store'
+import { siteContext } from '@/site-context'
+import { showMsg, uniqBy } from '@/utils'
+import i18n from '@/utils/i18n'
 
 const params = new URLSearchParams(location.search)
-let page = getFirstPageNo(params)
-let tags = params.get('tags')
+const query = {
+  page: getFirstPageNo(params),
+  tags: params.get('tags'),
+}
+export const getSearchState = () => query
+export const setPage = (page: number) => query.page = page
+export const setTags = (tags: string) => query.tags = tags
 
-const fetchActions = [
-  {
-    test: isPopularPage,
-    action: async () => {
-      const results = await fetchPostsByPath()
-      store.requestStop = true
-      return dealBlacklist(results)
-    },
-  },
-  {
-    test: isPoolShowPage,
-    action: async () => {
-      const results = await fetchPostsByPath('posts', page)
-      return tags ? results.tagged(tags) : results
-    },
-  },
-  {
-    test: () => true,
-    action: async () => {
-      const results = await searchBooru(page, tags)
-      return dealBlacklist(results)
-    },
-  },
-]
-
-export const searchPosts = async () => {
-  store.requestState = true
+export const searchPosts = async (latePageQuery = false) => {
+  store.requestLoading = true
   try {
-    const posts = await fetchActions.find(e => e.test())?.action()
+    const { page, tags } = getSearchState()
+    let posts = await siteActions.find(e => e.is() && e.posts)?.posts?.(page, tags)
     if (Array.isArray(posts) && posts.length > 0) {
+      posts = handleBlacklist(posts as any)
       store.currentPage = page
-      store.imageList = [
+      store.imageList = uniqBy([
         ...store.imageList,
-        ...(store.showNSFWContents ? posts : posts.filter(e => ['s', 'g'].includes(e.rating))),
-      ]
-      pushPageState(page)
-      page++
+        ...(settings.showNSFWContents ? posts : posts.filter(e => ['s', 'g'].includes(e.rating))),
+      ], 'id')
+      pushPageState(page, latePageQuery)
+      setPage(page + 1)
     } else {
       store.requestStop = true
     }
   } catch (error) {
     console.log(`fetch error: ${error}`)
+    // 「站点不可用」降级提示：首页即失败（列表为空）时直接告知用户；
+    // 翻页追加失败则停止自动加载，不打断已渲染的内容
+    store.requestStop = true
+    if (store.imageList.length === 0) {
+      showMsg({ msg: String(i18n.t('siteUnavailable')), type: 'error' })
+    }
   } finally {
-    store.requestState = false
+    store.requestLoading = false
   }
 }
 
-// const calcFetchTimes = () => {
-//   const vcont = document.querySelector('._vcont')
-//   const cnth = vcont?.clientHeight
-//   const doch = document.documentElement.clientHeight
-//   return cnth ? Math.floor(doch / cnth) : 1
-// }
+const calcFetchTimes = () => {
+  const vcont = document.querySelector('._vcont')
+  const cnth = vcont?.clientHeight
+  const doch = document.documentElement.clientHeight
+  return cnth ? Math.floor(doch / cnth) : 1
+}
+
+// 有的站点一页条数很少（uhdpaper 每页 20 条），瀑布流撑不满一屏时页面根本不可滚动，
+// 滚动事件永远不触发，这里主动补几页，直到能滚动或者没有更多
+const fillViewport = async () => {
+  if (settings.masonryLayout === 'virtual') return
+  for (let i = 0; i < 3; i++) {
+    await nextTick()
+    const doc = document.documentElement
+    if (doc.scrollHeight > doc.clientHeight + 1) return
+    if (store.requestStop) return
+    await searchPosts(true)
+  }
+}
 
 export const initPosts = async () => {
-  await searchPosts()
+  await searchPosts(true)
+  if (settings.masonryLayout === 'virtual') {
+    document.documentElement.scrollTop = 1
+  }
   if (store.requestStop) return
-  if (['safebooru', 'konachan'].some(e => location.href.includes(e))) return
-  await searchPosts()
+  if (/safebooru|nozomi\.la/.test(siteContext.host)) return
+  let times = calcFetchTimes()
+  if (times > 3) times = 3
+  for (let index = 1; index < times; index++) {
+    await searchPosts(true)
+  }
+  await fillViewport()
 }
 
 export const refreshPosts = () => {
-  page = 1
+  setPage(1)
   store.imageList = []
   store.selectedImageList = []
   store.requestStop = false
@@ -102,14 +89,19 @@ export const refreshPosts = () => {
 }
 
 export const loadPostsByPage = (toPage: string) => {
-  page = Number(toPage) || 1
+  setPage(Number(toPage) || 1)
   store.imageList = []
   searchPosts()
 }
 
 export const loadPostsByTags = (searchTerm: string) => {
-  page = 1
-  tags = searchTerm
+  setPage(1)
+  setTags(searchTerm)
   store.imageList = []
-  searchPosts()
+  searchPosts().then(async () => {
+    if (settings.masonryLayout === 'virtual') {
+      document.documentElement.scrollTop = 1
+    }
+    await fillViewport()
+  })
 }

@@ -1,0 +1,77 @@
+import type { SearchResults } from '@himeka/booru'
+import { settings } from '@/store'
+import { allgirl, isEveria, isHentaiCosplay, isHentaiGameCg, isHentaiclub, isWallhaven, nozomila, szurubooru, uhdpaper } from '@/api'
+import { BOORU_PAGE_LIMIT, isPidSite } from '@/api/booru'
+import { siteContext } from '@/site-context'
+
+/**
+ * 列表页的通用工具（自脚本版 store/actions/_util.ts 移植）。
+ *
+ * 路径翻页站的「刷新还原页码」与「不写 ?page=」守卫与脚本版对齐
+ * （location.pathname → siteContext.pathname）；rule34 的 cookie 阈值
+ * 过滤依赖目标站 cookie，web 版不可读，不迁移；fav 页已砍（登录态）。
+ */
+
+export function getFirstPageNo(params: URLSearchParams) {
+  if (isPidSite()) {
+    const page = Number(params.get('pid')) || 0
+    return Math.trunc(page / BOORU_PAGE_LIMIT) + 1
+  }
+  // everia 靠路径 /page/N/ 翻页，URL 里的 page 参数只是临时态，刷新时要从路径还原
+  if (isEveria()) {
+    return Number(siteContext.pathname.match(/\/page\/(\d+)\/?$/)?.[1]) || 1
+  }
+  // hentai-cosplay-xxx 同为路径翻页（/search/page/2/、/search/tag/x/page/2/）
+  if (isHentaiCosplay()) {
+    return Number(siteContext.pathname.match(/\/page\/(\d+)\/?$/)?.[1]) || 1
+  }
+  // hentaiclub：首页 /page/2/，分区 /sort/r15.html/2/（页码在 .html 之后）
+  if (isHentaiclub()) {
+    return Number(siteContext.pathname.match(/\/(?:page\/)?(\d+)\/?$/)?.[1]) || 1
+  }
+  // hentaigamecg 列表 `/page/N/` 与相册 `/{slug}/page/N/` 都是路径翻页，
+  // 站点不认 `?page=`，刷新时一律从路径还原
+  if (isHentaiGameCg()) {
+    return Number(siteContext.pathname.match(/\/page\/(\d+)\/?$/)?.[1]) || 1
+  }
+  return Number(params.get('page')) || 1
+}
+
+export function pushPageState(pageNo: number, latePageQuery = false) {
+  if (allgirl.is() || nozomila.is()) return
+  // uhdpaper 靠 ?updated-max= 游标翻页，URL 里不写 page（否则会把站点搜索地址弄脏）
+  if (uhdpaper.is()) return
+  // szurubooru 用 offset 分页，站点自身不认 ?page=，写进 URL 只会把搜索地址弄脏
+  if (szurubooru.is()) return
+  // everia 靠路径 /page/N/ 翻页；文章页更不能写 page，否则刷新会从中间一块开始
+  if (isEveria()) return
+  // hentai-cosplay-xxx / hentaiclub 同样是路径翻页（page/N/、sort/r15.html/N/），
+  // 写 ?page= 既不被站点识别，也会污染地址栏
+  if (isHentaiCosplay() || isHentaiclub()) return
+  // wallhaven 的 /random 没有页码概念，写进 URL 只会让刷新后的分页状态失真
+  if (isWallhaven() && siteContext.pathname === '/random') return
+  // hentaigamecg 同样是路径翻页（列表 `/page/N/`、相册 `/{slug}/page/N/`），
+  // 但首屏撑不满一屏时 `fillViewport` 会先补几页，页码会自己往前走；
+  // 写进 URL 会让刷新从中间一页开始，干脆不写，与 hentaiclub / hentaiCosplay 一致
+  if (isHentaiGameCg()) return
+  let pageParamName = 'page'
+  if (isPidSite()) {
+    pageParamName = 'pid'
+    pageNo = (pageNo - 1) * BOORU_PAGE_LIMIT
+  } else if (latePageQuery && pageNo > 1) {
+    pageNo -= 1
+  }
+  const url = new URL(location.href)
+  url.searchParams.set(pageParamName, pageNo.toString())
+  history.replaceState('', '', url)
+}
+
+export function handleBlacklist(results: SearchResults) {
+  if (!settings.blacklist.length) return results
+  return typeof results.blacklist == 'function'
+    ? results.blacklist(settings.blacklist)
+    : results.filter(e => {
+      const tags = e.tags.map(t => t.toLowerCase())
+      return !settings.blacklist.some((w: string) => tags.includes(w.toLowerCase()))
+    })
+}

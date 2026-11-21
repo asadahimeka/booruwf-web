@@ -1,56 +1,225 @@
 <template>
-  <div v-if="showImageList">
-    <masonry :cols="columnCount" gutter="8px">
-      <v-card v-for="(image, index) in store.imageList" :key="index" class="mb-2" :style="maxHeightStyle">
+  <div v-if="showImageList" :style="settings.masonryLayout === 'virtual' ? 'height:93vh' : ''">
+    <virtual-waterfall
+      v-if="settings.masonryLayout === 'virtual'"
+      class="virtual-waterfall"
+      :class="{ 'wf-no-fit-screen': notFitScreen }"
+      :gap="10"
+      :preload-screen-count="[1, 1]"
+      :item-min-width="300"
+      :items="store.imageList"
+      :max-column-count="virtualMaxCol"
+      :calc-item-height="calcItemHeight"
+      style="min-height: 93vh"
+    >
+      <template #default="{ item, index }">
+        <div
+          class="posts-image-card"
+          @mouseenter="onCardHover(item)"
+          @mouseleave="onCardLeave(item.id)"
+        >
+          <img
+            class="post-image-v"
+            alt=""
+            loading="lazy"
+            :src="getImgSrc(item)"
+            role="button"
+            tabindex="0"
+            @click="showImgModal(index)"
+            @contextmenu="onCtxMenu($event, item)"
+            @error="onImageLoadError(item?.id || '')"
+          >
+          <video
+            v-if="playingPost?.id === item.id && playingKind === 'video' && playingSrc"
+            class="posts-image-player"
+            :src="playingSrc"
+            muted
+            loop
+            autoplay
+            playsinline
+            @click.stop="stopInlinePlay()"
+          >
+          </video>
+          <img
+            v-else-if="playingPost?.id === item.id && playingKind === 'anim' && playingSrc"
+            class="posts-image-player"
+            alt=""
+            :src="playingSrc"
+            @click.stop="stopInlinePlay()"
+          >
+          <template v-if="store.isYKSite">
+            <v-icon
+              v-if="//@ts-ignore
+                item?.data?.has_children"
+              class="posts-image-type"
+              dense
+            >
+              {{ mdiFileTree }}
+            </v-icon>
+            <v-icon
+              v-if="//@ts-ignore
+                item?.data?.parent_id"
+              class="posts-image-type"
+              dense
+            >
+              {{ mdiFolderNetwork }}
+            </v-icon>
+          </template>
+          <v-icon
+            v-if="getMediaBadge(item)"
+            class="posts-image-type posts-image-play"
+            :class="{ 'posts-image-play--on': playingPost?.id === item.id }"
+            role="button"
+            tabindex="0"
+            :title="canInlinePlay(item) ? $t('inlinePlayTitle') : undefined"
+            @click.stop="toggleInlinePlay(item)"
+            @keydown.enter.prevent="toggleInlinePlay(item)"
+          >
+            {{ getMediaBadge(item) }}
+          </v-icon>
+          <span v-if="getMediaCount(item) > 1" class="posts-image-count">{{ getMediaCount(item) }}</span>
+          <div v-if="settings.showPostCheckbox" class="posts-image-checkbox">
+            <v-checkbox class="ma-0 pa-0" :value="isPostChecked(item?.id)" hide-details @change="onPostCheckboxChange($event, item)" />
+          </div>
+          <div v-if="settings.showListPostReso" class="posts-image-wh">{{ item?.width }} × {{ item?.height }}</div>
+          <div class="posts-image-actions">
+            <v-btn icon color="#fff" :title="$t('EsiorRgoeHI8h7IHMLDA4')" :href="item?.postView" target="_blank" rel="noreferrer">
+              <v-icon>{{ mdiLinkVariant }}</v-icon>
+            </v-btn>
+            <v-btn v-if="notPartialSupportSite" icon color="#fff" :title="$t('hVmfDxXoj8vkgVQabEOSr')" @click.stop="addToSelectedList(item)">
+              <v-icon>{{ mdiPlaylistPlus }}</v-icon>
+            </v-btn>
+            <v-btn v-if="notPartialSupportSite" icon color="#fff" :title="$t('VpuyxZtIoDF9-YyOm0tK_')" @click.stop="downloadCtxPost(item)">
+              <v-icon>{{ mdiDownload }}</v-icon>
+            </v-btn>
+          </div>
+        </div>
+      </template>
+    </virtual-waterfall>
+    <wf-layout v-else>
+      <v-card
+        v-for="(image, index) in store.imageList"
+        :key="index"
+        class="posts-image-card"
+        :style="imgCardStyle(image)"
+        @mouseenter="onCardHover(image)"
+        @mouseleave="onCardLeave(image.id)"
+      >
+        <template v-if="settings.masonryLayout === 'justified'">
+          <img
+            class="post-image"
+            alt=""
+            loading="lazy"
+            :src="getImgSrc(image)"
+            role="button"
+            tabindex="0"
+            @click="showImgModal(index)"
+            @contextmenu="onCtxMenu($event, image)"
+            @error="onImageLoadError(image?.id || '')"
+          >
+        </template>
         <v-img
+          v-else
           transition="scroll-y-transition"
           :src="getImgSrc(image)"
           :aspect-ratio="image?.aspectRatio"
           @click="showImgModal(index)"
           @contextmenu="onCtxMenu($event, image)"
-          @error="onImageLoadError"
+          @error="onImageLoadError(image?.id)"
         >
           <template #placeholder>
             <v-row class="fill-height ma-0" align="center" justify="center">
               <v-progress-circular indeterminate color="deep-purple" />
             </v-row>
           </template>
-          <v-icon
-            v-if="image?.fileExt.toLowerCase() === 'gif'"
-            style="position: absolute;right: 5px"
-          >
-            {{ mdiFileGifBox }}
-          </v-icon>
-          <v-icon
-            v-if="['mp4', 'webm'].includes(image?.fileExt.toLowerCase())"
-            style="position: absolute;right: 5px"
-          >
-            {{ mdiVideo }}
-          </v-icon>
         </v-img>
+        <video
+          v-if="playingPost?.id === image.id && playingKind === 'video' && playingSrc"
+          class="posts-image-player"
+          :src="playingSrc"
+          muted
+          loop
+          autoplay
+          playsinline
+          @click.stop="stopInlinePlay()"
+        >
+        </video>
+        <img
+          v-else-if="playingPost?.id === image.id && playingKind === 'anim' && playingSrc"
+          class="posts-image-player"
+          alt=""
+          :src="playingSrc"
+          @click.stop="stopInlinePlay()"
+        >
+        <template v-if="store.isYKSite">
+          <v-icon
+            v-if="//@ts-ignore
+              image?.data?.has_children"
+            class="posts-image-type"
+            dense
+          >
+            {{ mdiFileTree }}
+          </v-icon>
+          <v-icon
+            v-if="//@ts-ignore
+              image?.data?.parent_id"
+            class="posts-image-type"
+            dense
+          >
+            {{ mdiFolderNetwork }}
+          </v-icon>
+        </template>
+        <v-icon
+          v-if="getMediaBadge(image)"
+          class="posts-image-type posts-image-play"
+          :class="{ 'posts-image-play--on': playingPost?.id === image.id }"
+          role="button"
+          tabindex="0"
+          :title="canInlinePlay(image) ? $t('inlinePlayTitle') : undefined"
+          @click.stop="toggleInlinePlay(image)"
+          @keydown.enter.prevent="toggleInlinePlay(image)"
+        >
+          {{ getMediaBadge(image) }}
+        </v-icon>
+        <span v-if="getMediaCount(image) > 1" class="posts-image-count">{{ getMediaCount(image) }}</span>
+        <div v-if="settings.showPostCheckbox" class="posts-image-checkbox">
+          <v-checkbox class="ma-0 pa-0" :value="isPostChecked(image?.id)" hide-details @change="onPostCheckboxChange($event, image)" />
+        </div>
+        <div v-if="settings.showListPostReso" class="posts-image-wh">{{ image?.width }} × {{ image?.height }}</div>
+        <div class="posts-image-actions">
+          <v-btn icon color="#fff" :title="$t('EsiorRgoeHI8h7IHMLDA4')" :href="image?.postView" target="_blank" rel="noreferrer">
+            <v-icon>{{ mdiLinkVariant }}</v-icon>
+          </v-btn>
+          <v-btn v-if="notPartialSupportSite" class="hidden-md-and-down" icon color="#fff" :title="$t('hVmfDxXoj8vkgVQabEOSr')" @click.stop="addToSelectedList(image)">
+            <v-icon>{{ mdiPlaylistPlus }}</v-icon>
+          </v-btn>
+          <v-btn v-if="notPartialSupportSite" icon color="#fff" :title="$t('VpuyxZtIoDF9-YyOm0tK_')" @click.stop="downloadCtxPost(image)">
+            <v-icon>{{ mdiDownload }}</v-icon>
+          </v-btn>
+        </div>
       </v-card>
-    </masonry>
+    </wf-layout>
     <div class="d-flex justify-center">
-      <v-btn v-show="store.requestState" color="#ee8888" text>
-        加载中...
+      <v-btn v-show="store.requestLoading" color="primary" text>
+        {{ $t('RN4dt81l_fZMWODsskZob') }}...
       </v-btn>
-      <v-btn v-show="showLoadMore" color="#ee8888" text @click="searchPosts()">
-        加载更多
+      <v-btn v-show="showLoadMore" color="primary" text @click="searchPosts()">
+        {{ $t('fC8XNfCl04zK7vgeaRZMQ') }}
       </v-btn>
-      <v-btn v-show="showNoMore" color="#ee8888" text>
-        下面没有了...
+      <v-btn v-show="showNoMore" class="mt-2" color="primary" text>
+        {{ $t('Z4pa8GhgE63OGGvCqAld0') }}...
       </v-btn>
     </div>
     <v-menu v-model="showMenu" :position-x="x" :position-y="y" absolute offset-y>
       <v-list>
-        <!-- <v-list-item v-if="store.isYKSite" @click="addFavorite">
-          <v-list-item-title>加入收藏</v-list-item-title>
-        </v-list-item> -->
-        <v-list-item @click="openDetail">
-          <v-list-item-title>新标签页打开</v-list-item-title>
+        <v-list-item v-if="notPartialSupportSite" @click="downloadCtxPost()">
+          <v-list-item-title>{{ $t('VpuyxZtIoDF9-YyOm0tK_') }}</v-list-item-title>
         </v-list-item>
-        <v-list-item class="hidden-md-and-down" @click="addToSelectedList">
-          <v-list-item-title>加入下载列表</v-list-item-title>
+        <v-list-item @click="openDetail()">
+          <v-list-item-title>{{ $t('EsiorRgoeHI8h7IHMLDA4') }}</v-list-item-title>
+        </v-list-item>
+        <v-list-item v-if="notPartialSupportSite" class="hidden-md-and-down" @click="addToSelectedList()">
+          <v-list-item-title>{{ $t('hVmfDxXoj8vkgVQabEOSr') }}</v-list-item-title>
         </v-list-item>
       </v-list>
     </v-menu>
@@ -63,6 +232,7 @@
         bottom
         right
         color="pink"
+        class="refresh_posts_btn"
         @click="refreshPosts()"
       >
         <v-icon>{{ mdiRefresh }}</v-icon>
@@ -73,36 +243,35 @@
 </template>
 
 <script setup lang="ts">
-import { mdiFileGifBox, mdiRefresh, mdiVideo } from '@mdi/js'
-import { computed, nextTick, onMounted, onUnmounted, ref, set, watch } from '@vue/composition-api'
+import { mdiDownload, mdiFileGifBox, mdiFileTree, mdiFolderNetwork, mdiLinkVariant, mdiPlaylistPlus, mdiRefresh, mdiVideo } from '@mdi/js'
+import { computed, nextTick, onMounted, onUnmounted, ref, set, watch } from 'vue'
 import type { Post } from '@himeka/booru'
 import PostDetail from './PostDetail.vue'
-import { notReachBottom, throttleScroll } from '@/utils'
-// import { addPostToFavorites } from '@/api/moebooru'
+import { downloadFile, fancyboxShow, notReachBottom, showMsg, throttleScroll } from '@/utils'
+import { getMediaCount, isEveriaList, isHentaiGameCgList, isHentaiclubList } from '@/api'
+import { isSampleDownloadSupportedSite, notPartialSupportSite } from '@/api/booru'
+import { canInlinePlay, getInlinePlayKind, getInlinePlaySrc } from '@/utils/inline-play'
+import type { InlinePlayKind } from '@/utils/inline-play'
+import { isR34PahealHome } from '@/api/r34-paheal'
 import { initPosts, refreshPosts, searchPosts } from '@/store/actions/post'
-import store from '@/store'
+import { siteContext } from '@/site-context'
+import { fillPostDetail } from '@/store/actions/detail'
+import { siteActions } from '@/store/actions/site'
+import { removeFromSelectedList, settings, store, addToSelectedList as storeAddToSelectedList } from '@/store'
+import { getActiveDownloadUrlKey, getAvailableDownloadUrlKeys, resolvePostDownloadSource } from '@/utils/download-source'
+import i18n from '@/utils/i18n'
 
+const notFitScreen = ref(localStorage.getItem('__fitScreen') == '0')
 const showImageList = ref(true)
 const showFab = ref(false)
-const columnCount = computed(() => {
-  return store.selectedColumn === '0'
-    ? {
-        300: 1,
-        600: 2,
-        900: 3,
-        1200: 4,
-        1600: 6,
-        1920: 7,
-        2400: 8,
-        2700: 9,
-        3000: 10,
-        default: 6,
-      }
-    : +store.selectedColumn
+const hasSampleDownload = isSampleDownloadSupportedSite()
+const activeDownloadUrlKey = computed(() => {
+  const keys = getAvailableDownloadUrlKeys(hasSampleDownload, store.isYKSite)
+  return getActiveDownloadUrlKey(keys, settings.downloadUrlKey)
 })
 
 watch(
-  () => store.selectedColumn,
+  () => settings.selectedColumn,
   () => {
     showImageList.value = false
     nextTick(() => {
@@ -111,32 +280,119 @@ watch(
   },
 )
 
-const showNoMore = computed(() => !store.requestState && store.requestStop)
-const showLoadMore = computed(() => !store.requestState && !store.requestStop)
+const showNoMore = computed(() => !store.requestLoading && store.requestStop)
+const showLoadMore = computed(() => !store.requestLoading && !store.requestStop)
 
 const ctxActPost = ref<Post>()
 const showMenu = ref(false)
 const x = ref(0)
 const y = ref(0)
 
+// ---- 列表内联播放（issue #89）：同一时刻只播一个，按钮播放粘性、hover 播放随鼠标 ----
+const playingPost = ref<Post | null>(null)
+const pinnedPlayId = ref('')
+const hoverPlayId = ref('')
+const playingKind = computed<InlinePlayKind | null>(() => getInlinePlayKind(playingPost.value))
+const playingSrc = computed(() => store.proxyImg(getInlinePlaySrc(playingPost.value)))
+
+let playObserver: IntersectionObserver | null = null
+
+function getMediaBadge(post?: Post) {
+  const ext = post?.fileExt?.toLowerCase()
+  if (ext === 'gif') return mdiFileGifBox
+  if (ext === 'mp4' || ext === 'webm') return mdiVideo
+  return ''
+}
+
+function setPlaying(post: Post) {
+  playingPost.value = post
+  nextTick(observePlayingEl)
+}
+
+function toggleInlinePlay(post?: Post) {
+  const target = post || ctxActPost.value
+  if (!target) return
+  if (playingPost.value?.id === target.id) return stopInlinePlay()
+  if (!canInlinePlay(target)) return
+  pinnedPlayId.value = target.id
+  hoverPlayId.value = ''
+  setPlaying(target)
+}
+
+function onCardHover(post: Post) {
+  if (!settings.inlineHoverPlay) return
+  // 已有播放（含粘性播放）时不抢占
+  if (playingPost.value) return
+  if (!canInlinePlay(post)) return
+  hoverPlayId.value = post.id
+  setPlaying(post)
+}
+
+function onCardLeave(id: string) {
+  if (hoverPlayId.value !== id) return
+  hoverPlayId.value = ''
+  if (!pinnedPlayId.value) stopInlinePlay()
+}
+
+function stopInlinePlay() {
+  playingPost.value = null
+  pinnedPlayId.value = ''
+  hoverPlayId.value = ''
+  unobservePlayingEl()
+}
+
+function observePlayingEl() {
+  unobservePlayingEl()
+  const el = document.querySelector('.posts-image-player')
+  if (!el || typeof IntersectionObserver === 'undefined') return
+  playObserver = new IntersectionObserver(entries => {
+    if (entries.every(e => !e.isIntersecting)) stopInlinePlay()
+  })
+  playObserver.observe(el)
+}
+
+function unobservePlayingEl() {
+  playObserver?.disconnect()
+  playObserver = null
+}
+
+// 打开详情弹窗 / 列表刷新时停止播放
+watch(() => store.showImageSelected, v => {
+  v && stopInlinePlay()
+})
+watch(() => store.imageList, () => {
+  if (playingPost.value && !store.imageList.some(e => e.id === playingPost.value?.id)) stopInlinePlay()
+})
+
 const maxHeightStyle = computed(() => {
-  const num = +store.selectedColumn
+  const num = +settings.selectedColumn
   if (num == 0 || num > 3) return 'max-height: 60vh;overflow: hidden'
   return ''
 })
 
-const getImgSrc = (img?: Post) => {
-  // if (columnCount.value < 6) {
-  //   return (img?.sampleUrl && store.imgProxy + img.sampleUrl)
-  //     ?? (img?.fileUrl && store.imgProxy + img.fileUrl)
-  //     ?? void 0
-  // }
-  return (img?.previewUrl && store.imgProxy + img.previewUrl)
-      ?? (img?.fileUrl && store.imgProxy + img.fileUrl)
-      ?? void 0
+function imgCardStyle(image: Post) {
+  if (settings.masonryLayout !== 'justified') return maxHeightStyle
+  let style = `--w:${image?.width};--h:${image?.height};`
+  if (settings.justifiedBaseWidth) style += `--jstf-w:${settings.justifiedBaseWidth};`
+  return style
 }
 
-const onCtxMenu = (ev: MouseEvent, img: Post) => {
+function getImgSrc(img?: Post) {
+  let src = img?.previewUrl
+  if (!/\.(mp4|webm)$/i.test(img?.fileUrl || '')) {
+    const num = +settings.selectedColumn
+    if (settings.isThumbSampleUrl || (num != 0 && num < 7)) {
+      src = img?.sampleUrl
+    }
+    if (siteContext.host === 'danbooru.donmai.us' && src) {
+      src = src.replace(/(.*)\/180x180\/(.*)jpg/, '$1/720x720/$2webp')
+    }
+  }
+  // web 版：图源统一过图片代理（gelbooru 等站防盗链，详见 store.proxyImg）
+  return store.proxyImg(src) ?? store.proxyImg(img?.fileUrl) ?? void 0
+}
+
+function onCtxMenu(ev: MouseEvent, img: Post) {
   ev.preventDefault()
   showMenu.value = false
   x.value = ev.clientX
@@ -147,38 +403,110 @@ const onCtxMenu = (ev: MouseEvent, img: Post) => {
   })
 }
 
-const showImgModal = (index: number) => {
+function showImgModal(index: number) {
+  // everia / hentaiclub 的一篇、hentaigamecg 的一个相册都是一组图，弹窗看不了上百张；
+  // 新标签打开应用内的文章页 / 相册页视图（脚本版是跳源站页 + 脚本接管成瀑布流，
+  // web 版源站页没有接管，必须用 ?site=&path= 进应用自己的 article/album 适配器）
+  if (isEveriaList() || isHentaiclubList() || isHentaiGameCgList()) {
+    const target = store.imageList[index]?.postView
+    if (target) {
+      try {
+        const path = new URL(target).pathname
+        window.open(`/?site=${siteContext.host}&path=${encodeURIComponent(path)}`, '_blank', 'noreferrer')
+      } catch {
+        window.open(target, '_blank', 'noreferrer')
+      }
+      return
+    }
+  }
+  if (settings.useFancybox) {
+    fancyboxShow(store.imageList, index)
+    return
+  }
   store.imageSelectedIndex = index
   store.showImageSelected = true
 }
 
-const openDetail = () => {
-  const img = ctxActPost.value
+function openDetail(post?: Post) {
+  const img = post || ctxActPost.value
   img && window.open(img.postView, '_blank', 'noreferrer')
 }
 
-const addToSelectedList = () => {
-  const img = ctxActPost.value
-  img && store.addToSelectedList(img)
+function addToSelectedList(post?: Post) {
+  const img = post || ctxActPost.value
+  img && storeAddToSelectedList(img)
 }
 
-// const addFavorite = () => {
-//   const img = ctxActPost.value
-//   img && addPostToFavorites(img.id)
-// }
+async function downloadCtxPost(post?: Post) {
+  const img = post || ctxActPost.value
+  if (!img) return
+  let resolved = resolvePostDownloadSource(img, activeDownloadUrlKey.value)
+  // 有些站点的原图只写在单帖页里（gsbooru / allgirl / hentaibooru），列表阶段地址是空的：
+  // 这种情况下先补一次详情再解析，别让下载按钮点了没反应
+  if (!resolved.url && siteActions.some(e => e.is() && e.detail)) {
+    try {
+      await fillPostDetail(img)
+    } catch (error) {
+      console.log('fillPostDetail error:', error)
+    }
+    resolved = resolvePostDownloadSource(img, activeDownloadUrlKey.value)
+  }
+  const downloadUrl = resolved.url
+  let downloadName = resolved.name
+  if (!downloadUrl) return
+  if (store.isYKSite) {
+    downloadName = `${siteContext.host} ${img.id} ${img.tags.join(' ')}`
+  }
+  if (isR34PahealHome() && img.fileExt) {
+    downloadName = `${downloadName}.${img.fileExt}`
+  }
+  try {
+    await downloadFile(downloadUrl, downloadName)
+  } catch (error) {
+    showMsg({ msg: `${i18n.t('FAqj5ONm50QMfIt9Vq2p1')}: ${error}`, type: 'error' })
+  }
+}
 
-const onImageLoadError = (url: string) => {
-  const item = store.imageList.find(e => e.previewUrl == url)
+function isPostChecked(id?: string) {
+  return store.selectedImageList.some(e => e.id === id)
+}
+function onPostCheckboxChange(e: any, image: Post) {
+  e ? storeAddToSelectedList(image) : removeFromSelectedList(image.id)
+}
+
+function onImageLoadError(id: string) {
+  const item = store.imageList.find(e => e.id == id)
   if (!item) return
-  set(item, 'previewUrl', null)
-  set(item, 'sampleUrl', null)
+  if (item.previewUrl) {
+    set(item, 'previewUrl', null)
+    set(item, 'sampleUrl', null)
+    return
+  }
+  if (siteContext.host != 'rule34.xxx') return
+  const { fileUrl } = item
+  if (!fileUrl) return
+  if (fileUrl.includes('.jpeg')) {
+    set(item, 'fileUrl', fileUrl.replace(/\.jpeg(\?\d+)?$/, '.jpg'))
+  } else if (fileUrl.includes('.jpg')) {
+    set(item, 'fileUrl', fileUrl.replace(/\.jpg(\?\d+)?$/, '.png'))
+  } else {
+    set(item, 'fileUrl', fileUrl.replace(/\.png(\?\d+)?$/, '.gif'))
+  }
+}
+
+const virtualMaxCol = computed(() => {
+  const num = Number(settings.selectedColumn)
+  return num > 0 ? num : undefined
+})
+function calcItemHeight(item: any, itemWidth: number) {
+  return item.height * (itemWidth / item.width)
 }
 
 const scrollFn = throttleScroll(scroll => {
   if (!showFab.value && scroll > 200) showFab.value = true
   if (store.requestStop) return
-  if (store.requestState) return
-  notReachBottom() && searchPosts()
+  if (store.requestLoading) return
+  notReachBottom() && searchPosts(true)
 }, () => {
   if (showFab.value) showFab.value = false
 })
@@ -190,5 +518,6 @@ onMounted(async () => {
 
 onUnmounted(() => {
   window.removeEventListener('scroll', scrollFn)
+  unobservePlayingEl()
 })
 </script>

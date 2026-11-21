@@ -1,24 +1,43 @@
+import '@/styles/normalize.css'
+import 'vuetify/dist/vuetify.min.css'
 import '@/styles/custom.css'
-import '@/plugins/fetch'
 
 import Vue from 'vue'
-import VueCompositionAPI from '@vue/composition-api'
-import VueMasonry from 'vue-masonry-css'
+import VueMasonry from '@himeka/masonry-css'
+import TrueMasonry from '@himeka/masonry-true'
+import VirtualWaterfall from '@himeka/virtual-waterfall'
 import installVuetify from './plugins/vuetify'
+import i18n from './utils/i18n'
+import WfLayout from './components/WfLayout.vue'
 import App from './App.vue'
 
-Vue.use(VueCompositionAPI)
-Vue.use(VueMasonry)
+// @himeka/booru 包内的 search() 用全局 fetch 直连目标站，浏览器侧必然跨域失败。
+// 用包自带的全局钩子 BOORU_FETCH_PROXY（searchURI 构建时包装 URI）把包内请求
+// 接管到自建服务端网关 /proxy（替代旧的 window.fetch 全局 patch——
+// patch 会误伤第三方 https 请求，删除见计划 3.3）。
+globalThis.BOORU_FETCH_PROXY = (uri: string) => `/proxy?url=${encodeURIComponent(uri)}`
+
+Vue.component('Masonry', VueMasonry)
+Vue.component('TrueMasonry', TrueMasonry)
+Vue.component('VirtualWaterfall', VirtualWaterfall)
+Vue.component('WfLayout', WfLayout)
 const vuetify = installVuetify()
 const app = new Vue({
   vuetify,
+  i18n,
   render: h => h(App),
 })
 app.$mount('#app')
 
-if (location.host.includes('pixiv.pics')) {
-  const res = confirm('The current domain name is no longer in use. Would you like to visit another domain name instead?')
-  if (res) {
-    location.href = 'https://booru.cocomi.eu.org'
-  }
+// 标签翻译数据：随脚本版构建管线（yandere-masonry/src/data/handle-tags.mjs）产出，
+// 按计划 3.3 本地打包、不再运行时拉 CDN；动态 import 生成独立懒 chunk，仅中文环境加载。
+// 数据更新方式：从脚本版仓库重新拷贝这两个 min.json。
+// - __tagsCN      ← all_tags_cn.min.json（原样键，moebooru 系用）
+// - __tagsCNSpace ← all_tags_cn_space.min.json（空格键，danbooru / e-shuushuu 用）
+// 注：旧文件 tags_cn.json 在脚本版已废弃，不再使用。
+if (navigator.language.includes('zh')) {
+  import('./data/all_tags_cn.min.json')
+    .then(m => { window.__tagsCN = m.default })
+  import('./data/all_tags_cn_space.min.json')
+    .then(m => { window.__tagsCNSpace = m.default })
 }
