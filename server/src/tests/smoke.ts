@@ -2,7 +2,7 @@
  * 冒烟测试：对本地起的服务端做一轮基本验收（三运行时各跑一次，行为应一致）。
  * 用法：先启动服务端，再执行 pnpm -C server smoke
  */
-import { PORT } from './core/index.ts'
+import { PORT } from '../core/index.ts'
 
 const base = `http://127.0.0.1:${PORT}`
 

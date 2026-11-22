@@ -8,7 +8,7 @@
  */
 import { relative } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { serveStatic } from 'hono/deno'
+import { getConnInfo, serveStatic } from 'hono/deno'
 import { PORT, createApp } from '../core/index.ts'
 
 // 本仓库仅在 Node 环境安装 TS（Node 入口跑 tsc check），Bun/Deno 全局随运行时存在，
@@ -24,6 +24,8 @@ const distRoot = relative(Deno.cwd(), distAbs).replace(/\\/g, '/') || '.'
 const app = createApp({
   serveStatic: opts => serveStatic(opts),
   distRoot,
+  // 限流/拦截中间件的客户端 IP 来源（回环豁免依赖它）
+  getClientIp: c => getConnInfo(c)?.remote?.address,
 })
 
 // Deno 2.x 的 serve 选项键是 handler（不是 fetch）

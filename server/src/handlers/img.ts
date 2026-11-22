@@ -5,8 +5,9 @@
  * 透传 Range / Content-Range（视频拖动进度条依赖 ranged request）。
  */
 import type { Context } from 'hono'
-import { isAllowedImageDomain, isClaimedDomain, resolveRule } from './sites.ts'
-import { upstreamFetch } from './runtime.ts'
+import { isAllowedImageDomain, isClaimedDomain, resolveRule } from '../core/sites.ts'
+import { upstreamFetch } from '../core/runtime.ts'
+import { assertSafeUrl } from '../lib/ssrf-guard.ts'
 
 export async function imgHandler(c: Context) {
   const target = c.req.query('url')
@@ -15,8 +16,16 @@ export async function imgHandler(c: Context) {
   const url = new URL(target)
   if (!/^https?:$/.test(url.protocol)) return c.json({ error: 'invalid protocol' }, 400)
   // claim 供 IMG_ALLOW_ANY_HOST=0（纯白名单模式）时放行用户配置的自定义站点域
-  if (!isAllowedImageDomain(url) && !isClaimedDomain(url, c.req.query('claim')))
-    return c.json({ error: `domain not allowed: ${url.hostname}` }, 403)
+  if (!isAllowedImageDomain(url) && !isClaimedDomain(url, c.req.query('claim'))) { return c.json({ error: `domain not allowed: ${url.hostname}` }, 403) }
+
+  // SSRF 纵深防御：/img 的公网放开模式（任意合法 https 域）最需要这层 —— 私网
+  // IP 形态的 host 已被 PUBLIC_HOST_RE 挡住，这里补 DNS rebinding / 元数据端点 /
+  // IP-echo 服务三类绕过（见 ssrf-guard.ts）
+  try {
+    await assertSafeUrl(url)
+  } catch (e) {
+    return c.json({ error: (e as Error).message }, 403)
+  }
 
   const rule = resolveRule(url)
   const headers = new Headers()

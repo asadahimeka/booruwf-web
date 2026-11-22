@@ -4,8 +4,9 @@
  * 下载代理：带 Content-Disposition 返回附件，解决跨域 <a download> 失效问题。
  */
 import type { Context } from 'hono'
-import { isAllowedDomain, isClaimedDomain, resolveRule } from './sites.ts'
-import { upstreamFetch } from './runtime.ts'
+import { isAllowedDomain, isClaimedDomain, resolveRule } from '../core/sites.ts'
+import { upstreamFetch } from '../core/runtime.ts'
+import { assertSafeUrl } from '../lib/ssrf-guard.ts'
 
 export async function dlHandler(c: Context) {
   const target = c.req.query('url')
@@ -13,8 +14,14 @@ export async function dlHandler(c: Context) {
 
   const url = new URL(target)
   if (!/^https?:$/.test(url.protocol)) return c.json({ error: 'invalid protocol' }, 400)
-  if (!isAllowedDomain(url) && !isClaimedDomain(url, c.req.query('claim')))
-    return c.json({ error: `domain not allowed: ${url.hostname}` }, 403)
+  if (!isAllowedDomain(url) && !isClaimedDomain(url, c.req.query('claim'))) { return c.json({ error: `domain not allowed: ${url.hostname}` }, 403) }
+
+  // SSRF 纵深防御：白名单已收窄访问面，这里补私网/元数据/IP-echo/DNS rebinding
+  try {
+    await assertSafeUrl(url)
+  } catch (e) {
+    return c.json({ error: (e as Error).message }, 403)
+  }
 
   const rule = resolveRule(url)
   const headers = new Headers()

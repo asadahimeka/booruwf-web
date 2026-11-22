@@ -7,7 +7,7 @@
  * 子进程发请求，其余域名仍走原生 fetch（可带 undici ProxyAgent）。
  *
  * 三运行时约定：本文件依赖 node:child_process，只能被 entry/node.ts 引入，
- * 不得进入 core/（core 只用 Web 标准 API）。Bun / Deno 的全局 fetch
+ * 不得被 core/ 引用（core 只用 Web 标准 API）。Bun / Deno 的全局 fetch
  * TLS 指纹不同，如被封锁可在各自入口按同样思路注入（bun:spawn / Deno.Command）。
  */
 import { spawn } from 'node:child_process'

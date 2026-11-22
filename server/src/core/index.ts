@@ -7,11 +7,20 @@
  *   （见 entry/node.ts / bun.ts / deno.ts）
  * - 缓存为内存级（Map + TTL），不落盘
  */
+import type { Context } from 'hono'
 import { Hono } from 'hono'
 import { secureHeaders } from 'hono/secure-headers'
-import { proxyHandler } from './proxy.ts'
-import { imgHandler } from './img.ts'
-import { dlHandler } from './dl.ts'
+import { blocker } from '../middlewares/blocker.ts'
+import { dlHandler } from '../handlers/dl.ts'
+import { imgHandler } from '../handlers/img.ts'
+import { logger } from '../middlewares/logger.ts'
+import { rateLimit, resolveClientIp } from '../middlewares/rate-limit.ts'
+import { proxyHandler } from '../handlers/proxy.ts'
+import { loadDotEnv } from '../lib/env.ts'
+import { toPublicError } from '../lib/sanitize.ts'
+
+// 加载 server/.env（Bun/Deno 自动加载，这里补 Node；不覆盖已有变量）
+loadDotEnv()
 
 export const PORT = Number(process.env.PORT || 8787)
 
@@ -20,25 +29,35 @@ export interface AppOptions {
   serveStatic: (options: { root: string; rewriteRequestPath?: (p: string) => string }) => any
   /** dist 目录（entry 内解析为「相对当前 cwd 的路径」，如 '../dist'） */
   distRoot: string
+  /**
+   * 各运行时注入的连接来源 IP 解析（hono 各适配器的 getConnInfo）。
+   * 限流与拦截中间件用它识别回环流量（豁免）与公网客户端（计数）。
+   */
+  getClientIp?: (c: Context) => string | undefined
 }
 
-export function createApp({ serveStatic, distRoot }: AppOptions) {
+export function createApp({ serveStatic, distRoot, getClientIp: connInfo }: AppOptions) {
   const app = new Hono()
 
-  app.use('*', async (ctx, next) => {
-    const start = new Date()
-    await next()
-    const time = `${Date.now() - start.valueOf()}ms`
-    ctx.res.headers.set('X-Response-Time', time)
-    console.log(start.toLocaleString('zh'), ctx.req.method, ctx.res.status, time, ctx.req.url.slice(0, 150), ctx.req.header('User-Agent'), ctx.req.header('Origin'), ctx.req.header('Referer'))
-  })
+  // 客户端 IP：先走 TRUST_* 代理头，再回退到运行时连接信息
+  const clientIp = (c: Context) => resolveClientIp(c, connInfo)
+
+  app.use('*', logger())
+
+  // 限流挂在所有路由（回环豁免，公网按 IP 计数）
+  app.use('*', rateLimit(clientIp))
   app.use(secureHeaders({ crossOriginResourcePolicy: 'same-site' }))
 
+  // 内部异常统一兜底：细节只进日志，对外仅返回 requestId
+  app.onError((err, c) => c.json(toPublicError(err), 500))
+
   // --- 代理网关（先于静态路由注册，避免被 SPA fallback 吞掉） ---
-  app.get('/proxy/*', proxyHandler)
-  app.post('/proxy/*', proxyHandler) // hentaiclub 等站点搜索用 POST
-  app.get('/img/*', imgHandler)
-  app.get('/dl/*', dlHandler)
+  // blocker 只挂代理端点：UA 黑名单 / isbot / Origin-Referer 白名单
+  const guard = blocker(clientIp)
+  app.get('/proxy/*', guard, proxyHandler)
+  app.post('/proxy/*', guard, proxyHandler) // hentaiclub 等站点搜索用 POST
+  app.get('/img/*', guard, imgHandler)
+  app.get('/dl/*', guard, dlHandler)
 
   // --- 健康检查 ---
   app.get('/healthz', c => c.json({ ok: true, ts: Date.now() }))

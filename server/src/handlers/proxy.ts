@@ -10,9 +10,11 @@
  * 原始请求，对前端完全透明。
  */
 import type { Context } from 'hono'
-import { isAllowedDomain, isClaimedDomain, resolveRule } from './sites.ts'
-import { upstreamFetch } from './runtime.ts'
-import type { SiteRule } from './sites.ts'
+import { isAllowedDomain, isClaimedDomain, resolveRule } from '../core/sites.ts'
+import { upstreamFetch } from '../core/runtime.ts'
+import { assertSafeUrl } from '../lib/ssrf-guard.ts'
+import { RequestDeduper } from '../lib/request-deduper.ts'
+import type { SiteRule } from '../core/sites.ts'
 
 /** 简单内存缓存：仅缓存小体积 JSON/文本响应，图片一律不走这里 */
 const cache = new Map<string, { status: number; headers: Headers; body: ArrayBuffer; ts: number }>()
@@ -20,14 +22,23 @@ const CACHE_TTL = 60_000
 const CACHE_MAX = 64
 const CACHE_MAX_BODY = 512 * 1024
 
+// 并发相同请求合并：瀑布流首屏同一 URL 的并发请求只打一次上游（见 request-deduper.ts）
+const deduper = new RequestDeduper()
+
 export async function proxyHandler(c: Context) {
   const target = c.req.query('url')
   if (!target) return c.json({ error: 'missing url param' }, 400)
 
   const url = new URL(target)
   if (!/^https?:$/.test(url.protocol)) return c.json({ error: 'invalid protocol' }, 400)
-  if (!isAllowedDomain(url) && !isClaimedDomain(url, c.req.query('claim')))
-    return c.json({ error: `domain not allowed: ${url.hostname}` }, 403)
+  if (!isAllowedDomain(url) && !isClaimedDomain(url, c.req.query('claim'))) { return c.json({ error: `domain not allowed: ${url.hostname}` }, 403) }
+
+  // SSRF 纵深防御：私网/元数据/IP-echo/DNS rebinding 校验（见 ssrf-guard.ts）
+  try {
+    await assertSafeUrl(url)
+  } catch (e) {
+    return c.json({ error: (e as Error).message }, 403)
+  }
 
   const rule = resolveRule(url)
   const headers = new Headers()
@@ -59,62 +70,69 @@ export async function proxyHandler(c: Context) {
     return respondWith(cached.status, cached.headers, cached.body)
   }
 
-  let upstream: Response
-  try {
-    upstream = await upstreamFetch(url, {
-      method: isPost ? 'POST' : 'GET',
-      headers,
-      body: reqBody,
-      redirect: rule.redirect ?? 'follow',
-    })
-  } catch (e) {
-    // 上游不可达（DNS/连接超时/TLS 失败等）：返回 502 而不是让异常冒泡到 hono
-    return c.json({ error: `upstream fetch failed: ${((e as Error)?.cause as { code?: string } | undefined)?.code ?? (e as Error)?.message ?? e}` }, 502)
-  }
-
-  // 503 可能是轻量人机校验挑战页：尝试自动应答（拉 SVG 下发 cookie 后重试）
-  if (upstream.status === 503) {
-    const challengeBody = await upstream.arrayBuffer()
-    const solved = await trySolveChallenge(rule, url, headers, challengeBody)
-    if (solved) {
-      upstream = solved
-    } else {
-      // 原始 body 已消费，重建一个等价 Response 交给后续缓存/透传逻辑
-      upstream = new Response(challengeBody, { status: upstream.status, headers: upstream.headers })
+  const fetchUpstreamAndRespond = async (): Promise<Response> => {
+    let upstream: Response
+    try {
+      upstream = await upstreamFetch(url, {
+        method: isPost ? 'POST' : 'GET',
+        headers,
+        body: reqBody,
+        redirect: rule.redirect ?? 'follow',
+      })
+    } catch (e) {
+      // 上游不可达（DNS/连接超时/TLS 失败等）：返回 502 而不是让异常冒泡到 hono
+      return c.json({ error: `upstream fetch failed: ${((e as Error)?.cause as { code?: string } | undefined)?.code ?? (e as Error)?.message ?? e}` }, 502)
     }
-  }
 
-  const resHeaders = new Headers()
-  // content-length 一律不透传：fetch 通道会自动解压（上游的 length 是 gzip 尺寸），
-  // curl 通道的重定向链也常与最终 body 不一致；透传出去客户端会按旧值截断响应。
-  // Range 分页依赖的 content-range 保留（它描述的是字节区间，与编码无关）
-  for (const key of ['content-type', 'last-modified', 'etag', 'content-range']) {
-    const v = upstream.headers.get(key)
-    if (v) resHeaders.set(key, v)
-  }
-  resHeaders.set('cache-control', 'no-store')
-
-  // 小响应（JSON/HTML/XML）走内存缓存；大响应直接透传已缓冲的 body。
-  // 非 2xx 不缓存（挑战页 / 上游临时错误，缓存住会遮蔽后续恢复）
-  const contentType = upstream.headers.get('content-type') || ''
-  const isCacheable = upstream.status >= 200 && upstream.status < 300
-    && /^(application\/(json|xml|atom\+xml)|text\/(html|xml))/.test(contentType)
-  if (isCacheable) {
-    const body = await upstream.arrayBuffer()
-    if (body.byteLength <= CACHE_MAX_BODY) {
-      cache.set(cacheKey, { status: upstream.status, headers: resHeaders, body, ts: Date.now() })
-      if (cache.size > CACHE_MAX) {
-        const oldest = cache.keys().next().value
-        if (oldest) cache.delete(oldest)
+    // 503 可能是轻量人机校验挑战页：尝试自动应答（拉 SVG 下发 cookie 后重试）
+    if (upstream.status === 503) {
+      const challengeBody = await upstream.arrayBuffer()
+      const solved = await trySolveChallenge(rule, url, headers, challengeBody)
+      if (solved) {
+        upstream = solved
+      } else {
+        // 原始 body 已消费，重建一个等价 Response 交给后续缓存/透传逻辑
+        upstream = new Response(challengeBody, { status: upstream.status, headers: upstream.headers })
       }
     }
-    // 注意：此处 body 已经 arrayBuffer() 缓冲，绝不能再回退到 upstream.body
-    // （流已锁定，会抛 "body disturbed or locked"）；超缓存上限的大响应
-    // 直接透传缓冲体，不进缓存即可
-    return respondWith(upstream.status, resHeaders, body)
+
+    const resHeaders = new Headers()
+    // content-length 一律不透传：fetch 通道会自动解压（上游的 length 是 gzip 尺寸），
+    // curl 通道的重定向链也常与最终 body 不一致；透传出去客户端会按旧值截断响应。
+    // Range 分页依赖的 content-range 保留（它描述的是字节区间，与编码无关）
+    for (const key of ['content-type', 'last-modified', 'etag', 'content-range']) {
+      const v = upstream.headers.get(key)
+      if (v) resHeaders.set(key, v)
+    }
+    resHeaders.set('cache-control', 'no-store')
+
+    // 小响应（JSON/HTML/XML）走内存缓存；大响应直接透传已缓冲的 body。
+    // 非 2xx 不缓存（挑战页 / 上游临时错误，缓存住会遮蔽后续恢复）
+    const contentType = upstream.headers.get('content-type') || ''
+    const isCacheable = upstream.status >= 200 && upstream.status < 300
+      && /^(application\/(json|xml|atom\+xml)|text\/(html|xml))/.test(contentType)
+    if (isCacheable) {
+      const body = await upstream.arrayBuffer()
+      if (body.byteLength <= CACHE_MAX_BODY) {
+        cache.set(cacheKey, { status: upstream.status, headers: resHeaders, body, ts: Date.now() })
+        if (cache.size > CACHE_MAX) {
+          const oldest = cache.keys().next().value
+          if (oldest) cache.delete(oldest)
+        }
+      }
+      // 注意：此处 body 已经 arrayBuffer() 缓冲，绝不能再回退到 upstream.body
+      // （流已锁定，会抛 "body disturbed or locked"）；超缓存上限的大响应
+      // 直接透传缓冲体，不进缓存即可
+      return respondWith(upstream.status, resHeaders, body)
+    }
+
+    return new Response(upstream.body, { status: upstream.status, headers: resHeaders })
   }
 
-  return new Response(upstream.body, { status: upstream.status, headers: resHeaders })
+  // GET 请求走并发去重；key 附带 authorization / range —— 这些头会透传上游，
+  // 不同值的响应不同，不能共享。POST（站内搜索）不去重。
+  if (isPost) return fetchUpstreamAndRespond()
+  return deduper.run(`${cacheKey}|${authorization ?? ''}|${range ?? ''}`, fetchUpstreamAndRespond)
 }
 
 function respondWith(status: number, headers: Headers, body: ArrayBuffer | null) {

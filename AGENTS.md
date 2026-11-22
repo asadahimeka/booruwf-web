@@ -85,8 +85,12 @@ packages/       # workspace 内部包
   vue-virtual-waterfall/    # @himeka/virtual-waterfall
   release/                  # @himeka/release 发版工具
 server/
-  src/core/     # proxy / img / dl / allowed-domains / sites / runtime
-  src/entry/    # node.ts / bun.ts / deno.ts / curl-fetch.ts 各运行时入口
+  src/core/     # createApp 装配 / allowed-domains / sites / runtime（只用 Web 标准 API）
+  src/middlewares/  # Hono 中间件：logger / rate-limit / blocker
+  src/handlers/     # 路由处理器：proxy / img / dl
+  src/lib/          # 通用库：sanitize / request-deduper / ssrf-guard / env / curl-fetch
+  src/entry/        # node.ts / bun.ts / deno.ts 各运行时入口
+  src/tests/        # smoke.ts 冒烟测试（需先启动服务端）
 scripts/        # generate-allowed-domains.mjs、release.mjs
 e2e/            # Playwright 用例
 ```

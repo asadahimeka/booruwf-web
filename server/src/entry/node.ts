@@ -4,12 +4,13 @@
  */
 import { relative } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { getConnInfo } from '@hono/node-server/conninfo'
 import { serve } from '@hono/node-server'
 import { serveStatic } from '@hono/node-server/serve-static'
 import { PORT, createApp } from '../core/index.ts'
 import { DESKTOP_UA } from '../core/sites.ts'
 import { setUpstreamFetch } from '../core/runtime.ts'
-import { curlFetch } from './curl-fetch.ts'
+import { curlFetch } from '../lib/curl-fetch.ts'
 
 const distAbs = fileURLToPath(new URL('../../../dist', import.meta.url))
 const distRoot = relative(process.cwd(), distAbs).replace(/\\/g, '/') || '.'
@@ -89,6 +90,8 @@ setUpstreamFetch((async (input: any, init?: any) => {
 const app = createApp({
   serveStatic: opts => serveStatic(opts),
   distRoot,
+  // 限流/拦截中间件的客户端 IP 来源（回环豁免依赖它）
+  getClientIp: c => getConnInfo(c)?.remote?.address,
 })
 
 serve({ fetch: app.fetch, port: PORT }, info => {

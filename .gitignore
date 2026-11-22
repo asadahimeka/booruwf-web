@@ -12,6 +12,9 @@ dist
 dist-ssr
 *.local
 
+# server 环境变量（示例见 server/.env.example）
+server/.env
+
 # Playwright
 test-results
 playwright-report

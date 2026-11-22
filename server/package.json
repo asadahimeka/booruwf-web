@@ -11,11 +11,12 @@
     "start:bun": "bun src/entry/bun.ts",
     "start:deno": "deno run -A --node-modules-dir src/entry/deno.ts",
     "check": "tsc --noEmit",
-    "smoke": "tsx src/smoke.ts"
+    "smoke": "tsx src/tests/smoke.ts"
   },
   "dependencies": {
     "@hono/node-server": "^2.1.11",
     "hono": "^4.13.19",
+    "isbot": "^5.2.3",
     "undici": "^8.12.4"
   },
   "devDependencies": {

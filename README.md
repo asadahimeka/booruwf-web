@@ -58,6 +58,7 @@ pnpm -C server start:deno   # Deno 运行时
 ```
 
 可选环境变量：`PORT`（监听端口）、`UPSTREAM_PROXY`（上游 HTTP 代理，undici ProxyAgent）。
+完整环境变量说明（限流 / 来源拦截 / SSRF 防护 / 并发去重等）见 [server/README.md](./server/README.md)。
 目标域名白名单由 `packages/booru/sites.json` + `server/src/core/sites.ts` 派生，
 重新生成：`node scripts/generate-allowed-domains.mjs`。
 
