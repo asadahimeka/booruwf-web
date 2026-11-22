@@ -146,6 +146,13 @@ import { getSiteDefaultPath, isNsfwOnlySite } from '@/api/sites'
 import { SZURU_DEMO_HOST, normalizeSzuruDomain } from '@/api/szurubooru'
 import { settings, store } from '@/store'
 import { siteContext } from '@/site-context'
+import { useBackClose } from '@/utils/overlay-history'
+
+// 移动端返回键关闭抽屉（history 陷阱模式，见 overlay-history.ts）
+useBackClose(
+  () => store.showDrawer,
+  () => { store.showDrawer = false },
+)
 
 // 站点导航 = 内置站点 + 已配置的自部署 szurubooru 域名；
 // NSFW 关闭时隐藏「全站 NSFW」站点（列表恒空，见 sites.ts NSFW_ONLY_SITES）

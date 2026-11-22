@@ -553,6 +553,7 @@ import { siteContext } from '@/site-context'
 import { searchPosts } from '@/store/actions/post'
 import { setPostDetail } from '@/store/actions/detail'
 import i18n from '@/utils/i18n'
+import { useBackClose } from '@/utils/overlay-history'
 // DPlayer 内置 dashjs 等播放内核（~300KB），异步组件化：打开视频详情才加载
 const DPlayer = defineAsyncComponent(() => import('./DPlayer.vue'))
 
@@ -897,6 +898,14 @@ const metaTags = computed(() => postDetail.value.tags?.filter(e => e.type != 'ge
 
 const isExportTagsEnable = ref(true)
 const isExportTagsShow = ref(false)
+
+// 移动端返回键关闭（history 陷阱模式，见 overlay-history.ts）：
+// 全屏详情弹窗在上层，导出标签弹窗在其上再开一层，返回键按层级逐个关闭
+useBackClose(() => store.showImageSelected, close)
+useBackClose(
+  () => isExportTagsShow.value,
+  () => { isExportTagsShow.value = false },
+)
 function openExportTags() {
   isExportTagsShow.value = true
 }

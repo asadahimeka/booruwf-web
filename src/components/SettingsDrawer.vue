@@ -549,6 +549,7 @@ import i18n from '@/utils/i18n'
 import { type DownloadUrlKey, getActiveDownloadUrlKey, getAvailableDownloadUrlKeys } from '@/utils/download-source'
 import { getMainDirHandle, isFsaSupported, setMainDirHandle } from '@/utils/fsa'
 import { siteContext } from '@/site-context'
+import { useBackClose } from '@/utils/overlay-history'
 
 const isBoorus = ref(isBooruSite())
 const isYandere = ref(siteContext.host == 'yande.re')
@@ -705,6 +706,26 @@ const showNsfwConfirm = ref(false)
 // v-model 同步，用 :value 绑定会失步（取消后开关内部仍是 true，下次 change 值错乱）
 const nsfwSwitchValue = ref(settings.showNSFWContents)
 const nsfwLoading = ref(false)
+
+// 移动端返回键关闭（history 陷阱模式，见 overlay-history.ts）：
+// 设置抽屉 / 下载子目录确认框 / NSFW 确认框，层级按注册顺序
+useBackClose(
+  () => store.showSettings,
+  () => { store.showSettings = false },
+)
+useBackClose(
+  () => showDLConfirm.value,
+  () => setDLSubpathOn(false),
+)
+// persistent 确认框不能点遮罩关闭，返回键 = 取消：仅关掉弹窗并还原开关显示
+useBackClose(
+  () => showNsfwConfirm.value,
+  () => {
+    showNsfwConfirm.value = false
+    nsfwLoading.value = false
+    nsfwSwitchValue.value = settings.showNSFWContents
+  },
+)
 function setNsfwShow(val: boolean) {
   settings.showNSFWContents = val
   nsfwSwitchValue.value = val
