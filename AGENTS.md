@@ -142,7 +142,7 @@ ESLint 基于 `@antfu/eslint-config-vue` + 项目级覆盖：
 
 ## 其他约定
 
-- 代码注释与提交信息使用中文，注释重点解释「为什么」而非「是什么」
+- 代码注释与提交信息使用英文，不要大篇幅描述
 - 改 `packages/booru/sites.json` 或新增站点适配器时：同步检查 `src/api/sites.ts` 注册表与域名白名单再生成
 - `src/data/*.min.json` 为压缩过的翻译数据，不要手动编辑其格式
 - 发版走 `pnpm release`（scripts/release.mjs），不要手动改版本号发布
