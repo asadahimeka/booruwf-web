@@ -36,11 +36,11 @@ const defaultSettings = {
   // 默认关闭（与 web 版一致：旧实现 `!!localStorage.getItem('__showNSFW')`）。
   // 开启时设置抽屉弹 18+ 确认框；关闭后 NSFW 站点从导航隐藏、rating 'e' 帖子被过滤
   showNSFWContents: false,
-  isListenWheelEvent: true,
+  isListenWheelEvent: !isMobile,
   isFullImgPreload: false,
   imgPreloadNum: 1,
   masonryLayout: 'masonry' as 'masonry' | 'grid' | 'justified' | 'virtual' | 'masonry2',
-  isListenKeyupEvent: true,
+  isListenKeyupEvent: !isMobile,
   // API 凭证（如 danbooru 的 &api_key=xx&user_id=1）按站点域名分槽存储：
   // web 版单 SPA 自由切站，全局单值会把 A 站的 key 挂到 B 站请求上（脚本版
   // 单宿主站点无此问题）。旧版全局单值 credentialQuery 无法确定归属站点，弃用不迁移。
