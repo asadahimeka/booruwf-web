@@ -10,12 +10,15 @@ import installVuetify from './plugins/vuetify'
 import i18n from './utils/i18n'
 import WfLayout from './components/WfLayout.vue'
 import App from './App.vue'
+import { toApiProxyUrl } from '@/api/gateway'
 
 // @himeka/booru 包内的 search() 用全局 fetch 直连目标站，浏览器侧必然跨域失败。
-// 用包自带的全局钩子 BOORU_FETCH_PROXY（searchURI 构建时包装 URI）把包内请求
-// 接管到自建服务端网关 /proxy（替代旧的 window.fetch 全局 patch——
+// 用包自带的全局钩子 BOORU_FETCH_PROXY（searchURI 构建时包装 URI）接管包内请求。
+// 复用 gateway 的 toApiProxyUrl 而非写死 /proxy?url=：它每次调用都读 settings.apiProxy
+// 与 serverBase()，这样切换 API 代理（或自定义 __apiServer）后包站立即跟随，
+// 与走 apiFetch 的本地适配器行为一致（替代旧的 window.fetch 全局 patch——
 // patch 会误伤第三方 https 请求，删除见计划 3.3）。
-globalThis.BOORU_FETCH_PROXY = (uri: string) => `/proxy?url=${encodeURIComponent(uri)}`
+globalThis.BOORU_FETCH_PROXY = (uri: string) => toApiProxyUrl(uri)
 
 Vue.component('Masonry', VueMasonry)
 Vue.component('TrueMasonry', TrueMasonry)

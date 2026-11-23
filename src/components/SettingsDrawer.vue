@@ -188,7 +188,7 @@
           />
         </v-list-item-action>
       </v-list-item>
-      <v-list-item v-if="!settings.useFancybox">
+      <v-list-item v-if="!isMobile && !settings.useFancybox">
         <v-list-item-content>
           <v-list-item-title>{{ $t('_nQfaNuwbvPAIFKOY6_7u') }}</v-list-item-title>
           <v-list-item-subtitle>{{ $t('SIUUZ4wqJTOilEdcX3EOi') }}</v-list-item-subtitle>
@@ -197,7 +197,7 @@
           <v-switch v-model="settings.isListenWheelEvent" inset />
         </v-list-item-action>
       </v-list-item>
-      <v-list-item v-if="!settings.useFancybox">
+      <v-list-item v-if="!isMobile && !settings.useFancybox">
         <v-list-item-content>
           <v-list-item-title>{{ $t('fVE5taO6GDTPbILat4GCt') }}</v-list-item-title>
           <v-list-item-subtitle>{{ $t('w95XGurDhDfOfw7XH4JFW') }}</v-list-item-subtitle>
@@ -406,22 +406,13 @@
           <v-switch v-model="settings.isDLSubpath" inset :loading="dlSubLoading" @change="onDLSubpathChange" />
         </v-list-item-action>
       </v-list-item>
-      <v-list-item>
+      <v-list-item v-if="!isMobile">
         <v-list-item-content>
           <v-list-item-title>{{ $t('fbIpwMw2yVoSxP66OJ32z') }}</v-list-item-title>
           <v-list-item-subtitle>{{ $t('tEvQYzSVnggYAcM1uv9Tt') }}</v-list-item-subtitle>
         </v-list-item-content>
         <v-list-item-action>
           <v-switch v-model="settings.isFitScreen" inset />
-        </v-list-item-action>
-      </v-list-item>
-      <v-list-item>
-        <v-list-item-content>
-          <v-list-item-title>{{ $t('lkCkz1OpNtTCFRfGCEoBp') }}</v-list-item-title>
-          <v-list-item-subtitle>{{ $t('EZd1QQdgUDjT3yya5ZYe-') }}</v-list-item-subtitle>
-        </v-list-item-content>
-        <v-list-item-action>
-          <v-switch v-model="settings.autoWaterfall" inset />
         </v-list-item-action>
       </v-list-item>
       <v-list-item>
@@ -551,6 +542,7 @@ import { getMainDirHandle, isFsaSupported, setMainDirHandle } from '@/utils/fsa'
 import { siteContext } from '@/site-context'
 import { useBackClose } from '@/utils/overlay-history'
 
+const isMobile = ref(navigator.userAgent.includes('Mobile'))
 const isBoorus = ref(isBooruSite())
 const isYandere = ref(siteContext.host == 'yande.re')
 const isSzuru = computed(() => isSzurubooru())

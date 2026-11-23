@@ -51,8 +51,14 @@ function szuruClaimParam(target: string): string {
   return hit ? `&claim=${encodeURIComponent(host)}` : ''
 }
 
-/** 把上游 URL 重写为 API 代理地址：内置服务端 /proxy 或第三方前缀代理 */
-function toApiProxyUrl(target: string): string {
+/**
+ * 把上游 URL 重写为 API 代理地址：内置服务端 /proxy 或第三方前缀代理。
+ *
+ * 导出给 main.ts 的 BOORU_FETCH_PROXY 钩子复用——@himeka/booru 包内的 search()
+ * 不走 apiFetch，必须让两条管线共用同一套代理解析，否则切换 apiProxy 后包站
+ * 仍打默认 /proxy（每次调用都读 settings，故设置变更即时生效）。
+ */
+export function toApiProxyUrl(target: string): string {
   const proxy = settings.apiProxy
   if (proxy && proxy !== '__server') return proxy + target
   return `${serverBase()}/proxy?url=${encodeURIComponent(target)}${szuruClaimParam(target)}`

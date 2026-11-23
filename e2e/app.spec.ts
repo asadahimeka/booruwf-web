@@ -106,6 +106,31 @@ test.describe('站点选择与列表', () => {
     expect(snackbar).toBe(0)
   })
 
+  // 回归：包站通用适配器走 BOORU_FETCH_PROXY 全局钩子，曾写死默认 /proxy?url=，
+  // 导致切换 apiProxy 后仍打默认代理。这里拦截自定义前缀代理并断言 yande.re 搜索命中它。
+  test('切换 API 代理后包站通用适配器（booruAction）走新代理', async ({ page, context }) => {
+    const proxyPrefix = 'https://fake-proxy.test/'
+    await context.addInitScript((prefix) => {
+      localStorage.setItem('YM_APP_SETTINGS', JSON.stringify({ apiProxy: prefix }))
+    }, proxyPrefix)
+
+    let resolveHit!: () => void
+    const hit = new Promise<void>((resolve) => { resolveHit = resolve })
+    await page.route(url => url.hostname === 'fake-proxy.test', async (route) => {
+      if (route.request().url().includes('yande.re')) resolveHit()
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        headers: { 'access-control-allow-origin': '*' },
+        body: '[]',
+      })
+    })
+
+    await page.goto('/?site=yande.re')
+    // 若仍走默认 /proxy?url=，fake-proxy.test 不会被请求，这里超时失败
+    await hit
+  })
+
   test('?site=gelbooru.com&path=... HTML 适配器（apiFetch → /proxy）', async ({ page }) => {
     await page.goto(`/?site=gelbooru.com&path=${encodeURIComponent('/index.php?page=post&s=list')}`)
     await expect(page.locator('#loading')).toHaveCount(0, { timeout: 20_000 })

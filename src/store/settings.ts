@@ -55,7 +55,6 @@ const defaultSettings = {
   inlineHoverPlay: false,
   isFitScreen: true,
   isDLSubpath: false,
-  autoWaterfall: false,
   autoHideAppBar: true,
   showTagChipGroup: false,
   justifiedBaseWidth: isMobile ? 240 : 340,
